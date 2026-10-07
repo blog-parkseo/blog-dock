@@ -262,6 +262,27 @@ PUBLISHED ──삭제──▶ (행 삭제, 연쇄 삭제)
 | response_status, response_body | INT, TEXT | 처음 응답을 그대로 돌려줌 |
 | created_at | TIMESTAMP NN | 24시간 지나면 정리 |
 
+## 인덱스
+
+기본 키, 유니크 키, 외래 키에는 MySQL이 인덱스를 자동으로 만든다. 그 외에 자주 쓰는 조회에 맞춰 아래 인덱스를 둔다(Crowfoot 문서 656과 같음).
+
+| 테이블 | 컬럼(순서대로) | 쓰는 곳 |
+| --- | --- | --- |
+| post | blog_id, status, published_at DESC, id DESC | 블로그 메인·사이드바 글 수·구독 피드 (BLOG-03, SUB-02) |
+| post | status, visibility, published_at DESC, id DESC | 홈 최신 글 (HOME-01) |
+| post | category_id, status, published_at DESC, id DESC | 카테고리별 글 목록 (CAT-02) |
+| comment | post_id, created_at, id | 글의 댓글 작성순 (CMT-01) |
+| comment | created_at, post_id | 최근 7일 인기 글 집계 (HOME-02) |
+| post_like | post_id, created_at | 글별 공감 수 |
+| post_like | created_at, post_id | 최근 7일 인기 글 집계 (HOME-02) |
+| post_view_log | post_id, viewer_key, viewed_at | 30분 안 재조회 확인·조회수 (POST-09) |
+| guestbook | blog_id, created_at DESC | 방명록 최신순 (CMT-04) |
+| notification | user_id, is_read, created_at DESC | 읽지 않은 알림 (SUB-04) |
+| report | status, created_at | 대기 중인 신고 목록 (ADMIN-04) |
+| idempotency_record | created_at | 24시간 지난 기록 정리 |
+
+- 본문 검색(SRCH-01·02)은 처음에는 `blog_id`로 좁힌 뒤 `LIKE`로 찾는다. 글이 많아지면 MySQL `FULLTEXT`(ngram 파서) 인덱스를 `title, content_text`에 더한다. H2 개발 DB는 이 문법을 지원하지 않아서 운영 DB에만 둔다.
+
 ## 개수 계산
 
 공감 수, 댓글 수, 구독자 수, 글 수, 카테고리별 글 수는 저장하지 않고 보는 사람 기준으로 COUNT 한다(POL-04-5, NFR-09). 성능이 문제가 되면 그때 캐시 칼럼을 추가하고 같은 트랜잭션에서 갱신한다.
