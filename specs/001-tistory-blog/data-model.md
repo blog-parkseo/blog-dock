@@ -183,7 +183,7 @@ PUBLISHED ──삭제──▶ (행 삭제, 연쇄 삭제)
 | id | BIGINT PK | |
 | post_id | BIGINT FK→POST NN | |
 | author_id | BIGINT FK→USER NN | 회원만(비회원 댓글 없음) |
-| parent_id | BIGINT FK→COMMENT | CMT-05 (P2), 부모의 parent_id는 null |
+| parent_id | BIGINT FK→COMMENT | CMT-05 (P2), 부모의 parent_id는 null. ON DELETE CASCADE(글 삭제로 댓글이 연쇄 삭제될 때 답글이 부모보다 늦게 지워져도 막히지 않게) |
 | content | VARCHAR(1000) NN | 1~1,000자, 평문으로 저장하고 출력 시 이스케이프 |
 | is_secret | BOOLEAN NN | 기본 false, CMT-06 (P2) |
 | hidden_at, hidden_reason | TIMESTAMP, VARCHAR(500) | ADMIN-03 (P1) |
