@@ -281,7 +281,7 @@ MySQL 8, 문자셋 utf8mb4(한 글자 최대 4바이트) 기준이다. VARCHAR(n
 
 ## 인덱스
 
-기본 키, 유니크 키, 외래 키에는 MySQL이 인덱스를 자동으로 만든다. 그 외에 자주 쓰는 조회에 맞춰 아래 인덱스를 둔다(Crowfoot 문서 656과 같음).
+기본 키, 유니크 키, 외래 키에는 MySQL이 인덱스를 자동으로 만든다. 그 외에 자주 쓰는 조회에 맞춰 아래 16개 인덱스를 둔다(Crowfoot 문서 656과 같음). 실제 생성 SQL은 [sql/indexes.sql](sql/indexes.sql)에 있다.
 
 | 테이블 | 컬럼(순서대로) | 쓰는 곳 |
 | --- | --- | --- |
@@ -297,6 +297,10 @@ MySQL 8, 문자셋 utf8mb4(한 글자 최대 4바이트) 기준이다. VARCHAR(n
 | notification | user_id, is_read, created_at DESC | 읽지 않은 알림 (SUB-04) |
 | report | status, created_at | 대기 중인 신고 목록 (ADMIN-04) |
 | idempotency_record | created_at | 24시간 지난 기록 정리 |
+| category | blog_id, sort_order | 사이드바 카테고리 순서 (CAT-04) |
+| post | status, scheduled_at | 예약 발행 작업이 공개할 글 찾기 (POST-13) |
+| post_save | user_id, created_at DESC | 내가 저장한 글 최신순 (SOC-03) |
+| report | target_type, target_id | 한 대상에 쌓인 신고 모아 처리 (ADMIN-04) |
 
 - 본문 검색(SRCH-01·02)은 처음에는 `blog_id`로 좁힌 뒤 `LIKE`로 찾는다. 글이 많아지면 MySQL `FULLTEXT`(ngram 파서) 인덱스를 `title, content_text`에 더한다. H2 개발 DB는 이 문법을 지원하지 않아서 운영 DB에만 둔다.
 

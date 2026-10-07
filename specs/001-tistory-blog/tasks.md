@@ -44,7 +44,7 @@ description: "티스토리형 블로그 서비스 구현 작업 목록"
 
 **⚠️ CRITICAL**: 이 단계가 끝나기 전에는 사용자 스토리 작업을 시작하지 않는다
 
-- [ ] T007 Create Flyway migration `DB/V1__core.sql` with P0 tables from data-model.md: USER (`(social_provider, social_id)` UK, role `MEMBER`/`ADMIN`), BLOG (`address VARCHAR(32) UK NN`, `name VARCHAR(40) NN`, `active_owner_id` generated column + UK, `topic_id` nullable), RESERVED_WORD (seed: www, api, admin, login, logout, files, static, mail, help, blog, oauth2, manage, search, feed, notice), TOPIC (seed: IT, 여행, 반려동물, 일상, 맛집, 취미), CATEGORY (`name VARCHAR(20)`, `parent_key` generated column, `(blog_id, parent_key, name)` UK), POST (`title VARCHAR(100)`, `content_markdown/html/text MEDIUMTEXT NN`, `slug VARCHAR(100)`, `(blog_id, slug)` UK, `visibility`, `status`, `published_at`, `hidden_at`), TAG (`(blog_id, name)` UK), POST_TAG (복합 PK), IMAGE, COMMENT (`content VARCHAR(1000) NN`, `deleted_at`, `hidden_at`), POST_LIKE (복합 PK), IDEMPOTENCY_RECORD (`(user_id, idem_key)` PK), ADMIN_LOG; index `post(blog_id, status, published_at DESC, id DESC)` and `post(status, visibility, published_at DESC, id DESC)`
+- [ ] T007 Create Flyway migration `DB/V1__core.sql` with P0 tables from data-model.md: USER (`(social_provider, social_id)` UK, role `MEMBER`/`ADMIN`), BLOG (`address VARCHAR(32) UK NN`, `name VARCHAR(40) NN`, `active_owner_id` generated column + UK, `topic_id` nullable), RESERVED_WORD (seed: www, api, admin, login, logout, files, static, mail, help, blog, oauth2, manage, search, feed, notice), TOPIC (seed: IT, 여행, 반려동물, 일상, 맛집, 취미), CATEGORY (`name VARCHAR(20)`, `parent_key` generated column, `(blog_id, parent_key, name)` UK), POST (`title VARCHAR(100)`, `content_markdown/html/text MEDIUMTEXT NN`, `slug VARCHAR(100)`, `(blog_id, slug)` UK, `visibility`, `status`, `published_at`, `hidden_at`), TAG (`(blog_id, name)` UK), POST_TAG (복합 PK), IMAGE, COMMENT (`content VARCHAR(1000) NN`, `deleted_at`, `hidden_at`), POST_LIKE (복합 PK), IDEMPOTENCY_RECORD (`(user_id, idem_key)` PK), ADMIN_LOG; plus the `[V1]` indexes from `specs/001-tistory-blog/sql/indexes.sql`
 - [ ] T008 [P] Create JPA base: `BE/common/BaseTimeEntity.java` (`createdAt`, `updatedAt` as `Instant`), `BE/common/Clock` bean for testable time
 - [ ] T009 [P] Create `BE/auth/User.java` entity + `UserRepository.java` (role enum `MEMBER`, `ADMIN`)
 - [ ] T010 Implement `BE/config/SecurityConfig.java`: OAuth2 login with Kakao provider (authorization/token/user-info URIs, `client-authentication-method: client_secret_post`), session cookie `SESSION` HttpOnly SameSite=Lax `Domain=${APP_DOMAIN}`, CSRF via `CookieCsrfTokenRepository` (`XSRF-TOKEN` cookie, `X-XSRF-TOKEN` header), Origin check rejecting other sites, 401 JSON for `/api/**` instead of redirect (COM-01-1, NFR-03, NFR-04)
@@ -207,7 +207,7 @@ description: "티스토리형 블로그 서비스 구현 작업 목록"
 
 **Independent Test**: 임시저장 후 이어 쓰기 → 대표 이미지 → 하위 카테고리 글 확인 → 방명록 → 주소 복사
 
-- [ ] T079 [US6] Create migration `DB/V2__p1.sql`: GUESTBOOK (`content VARCHAR(1000) NN`), POST_VIEW_LOG (`viewer_key CHAR(64)`, index `(post_id, viewer_key, viewed_at)`), SUBSCRIPTION (복합 PK), USER_SANCTION, `CATEGORY.sort_order`, `POST.thumbnail_url`
+- [ ] T079 [US6] Create migration `DB/V2__p1.sql`: GUESTBOOK (`content VARCHAR(1000) NN`), POST_VIEW_LOG (`viewer_key CHAR(64)`, index `(post_id, viewer_key, viewed_at)`), SUBSCRIPTION (복합 PK), USER_SANCTION, `CATEGORY.sort_order`, `POST.thumbnail_url`; plus the `[V2]` indexes from `specs/001-tistory-blog/sql/indexes.sql`
 - [ ] T080 [P] [US6] Test `BT/post/DraftTest.java`: draft visible only to owner, publishing a draft turns that row PUBLISHED and removes it from drafts (POST-08)
 - [ ] T081 [P] [US6] Test `BT/post/ViewCountTest.java`: same viewer within 30분 counted once, after 30분 counted again (POST-09)
 - [ ] T082 [P] [US6] Test `BT/category/SubCategoryTest.java`: depth 2 → 400, parent with children delete → 409, parent list includes children posts and summed count, same name under different parents ok (CAT-03)
@@ -280,7 +280,7 @@ description: "티스토리형 블로그 서비스 구현 작업 목록"
 
 **Independent Test**: 기능마다 spec.md P2 표의 규칙을 테스트로 확인
 
-- [ ] T114 [US10] Create migration `DB/V3__p2.sql`: POST_SAVE, NOTIFICATION, REPORT, NOTICE, VISIT_STAT, BLOG_BLOCKED_USER, BLOG_BANNED_WORD, `COMMENT.parent_id/is_secret`, `POST.comment_allowed/scheduled_at`, `CATEGORY.is_private`, `BLOG.skin/background_image_url/restricted_at/restricted_reason/deleted_at`, `USER.withdrawn_at`
+- [ ] T114 [US10] Create migration `DB/V3__p2.sql`: POST_SAVE, NOTIFICATION, REPORT, NOTICE, VISIT_STAT, BLOG_BLOCKED_USER, BLOG_BANNED_WORD, `COMMENT.parent_id/is_secret`, `POST.comment_allowed/scheduled_at`, `CATEGORY.is_private`, `BLOG.skin/background_image_url/restricted_at/restricted_reason/deleted_at`, `USER.withdrawn_at`; plus the `[V3]` indexes from `specs/001-tistory-blog/sql/indexes.sql`
 - [ ] T115 [P] [US10] AUTH-06 회원 탈퇴: `DELETE /api/me` (confirm), clear personal data, show '탈퇴한 회원' — `BE/auth/WithdrawService.java`, test `BT/auth/WithdrawTest.java`
 - [ ] T116 [P] [US10] BLOG-05 꾸미기: skins list + background upload/remove — `BE/blog/BlogService.java`, `FE/pages/manage/SkinPage.jsx`
 - [ ] T117 [P] [US10] BLOG-07 블로그 삭제: soft delete, address stays reserved, re-create with new address allowed — `BE/blog/BlogService.java`, test `BT/blog/BlogDeleteTest.java`
