@@ -35,6 +35,25 @@ if [ ! -f app.env ]; then
 fi
 set -a; . ./app.env; set +a
 
+# java 찾기. ssh로 명령만 실행하면 로그인할 때 읽는 PATH 설정을 안 읽어서 java가 안 보일 수 있다
+find_java() {
+  if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then echo "$JAVA_HOME/bin/java"; return; fi
+  if command -v java; then return; fi
+  local c
+  for c in "$(bash -lc 'command -v java' 2>/dev/null </dev/null)" \
+           "$(bash -ic 'command -v java' 2>/dev/null </dev/null | tail -n 1)" \
+           "$HOME"/.sdkman/candidates/java/current/bin/java \
+           /usr/lib/jvm/*/bin/java /opt/*/bin/java /usr/local/*/bin/java "$HOME"/*/bin/java; do
+    if [ -x "$c" ]; then echo "$c"; return; fi
+  done
+  return 1
+}
+if ! JAVA=$(find_java); then
+  echo "서버에서 java를 찾지 못했어요. 서버 터미널에서 'which java'를 쳐서 나온 경로를 알려 주세요." >&2
+  exit 1
+fi
+echo "java: $JAVA"
+
 # 이전에 띄운 블로그를 끈다
 if [ -f app.pid ] && kill -0 "$(cat app.pid)" 2>/dev/null; then
   echo "이전 블로그 종료 (pid $(cat app.pid))"
@@ -44,7 +63,7 @@ if [ -f app.pid ] && kill -0 "$(cat app.pid)" 2>/dev/null; then
 fi
 
 # 새로 띄운다. 터미널을 닫아도 계속 돌도록 nohup으로 실행한다
-nohup java -Xmx512m -jar app.jar > logs/app.log 2>&1 &
+nohup "$JAVA" -Xmx512m -jar app.jar > logs/app.log 2>&1 &
 echo $! > app.pid
 echo "블로그 시작 (pid $(cat app.pid), 포트 ${SERVER_PORT})"
 
