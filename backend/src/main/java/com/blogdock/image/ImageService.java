@@ -97,10 +97,11 @@ public class ImageService {
 
     /** 내가 올린 이미지인지 확인하고 돌려준다. */
     @Transactional(readOnly = true)
-    public Image findMine(Long imageId, Long memberId) {
-        return imageRepository.findById(imageId)
+    public Image findMine(String url, Long memberId) {
+        String path = url.startsWith(URL_PREFIX) ? url.substring(URL_PREFIX.length()) : url;
+        return imageRepository.findByOriginalPath(path)
                 .filter(i -> i.getUploaderId().equals(memberId))
-                .orElseThrow(() -> ApiException.invalid("thumbnailImageId", "고른 대표 이미지를 찾을 수 없어요"));
+                .orElseThrow(() -> ApiException.invalid("thumbnailUrl", "고른 대표 이미지를 찾을 수 없어요"));
     }
 
     /** 우리 서버 이미지 주소면 썸네일 주소로, 아니면 그대로. */

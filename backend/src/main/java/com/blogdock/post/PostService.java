@@ -122,8 +122,8 @@ public class PostService {
         List<String> tags = tagService.normalize(req.tags());
 
         // POST-07: 고른 대표 이미지, 없으면 본문 첫 이미지, 그것도 없으면 대표 이미지 없음
-        String thumbnail = req.thumbnailImageId() != null
-                ? imageService.findMine(req.thumbnailImageId(), memberId).thumbUrl()
+        String thumbnail = req.thumbnailUrl() != null && !req.thumbnailUrl().isBlank()
+                ? imageService.findMine(req.thumbnailUrl(), memberId).thumbUrl()
                 : imageService.thumbOf(sanitizer.firstImageSrc(content.html()));
 
         post.write(title, categoryId, visibility, content, thumbnail);

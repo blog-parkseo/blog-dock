@@ -419,7 +419,7 @@ class FeaturesTest {
         publish(owner, postBody("사진만", "<img src=\"" + url + "\">"));
         // 남이 올린 이미지는 대표로 못 고른다
         Map<String, Object> body = postBody("남의 사진", "<p>x</p>");
-        body.put("thumbnailImageId", img.get("id").asLong());
+        body.put("thumbnailUrl", url);
         send(put("/api/posts/" + id), owner, body).andExpect(status().isOk());
         MockHttpSession other = blogOwner("img-other", "img-other");
         send(post("/api/posts"), other, body).andExpect(status().isBadRequest());

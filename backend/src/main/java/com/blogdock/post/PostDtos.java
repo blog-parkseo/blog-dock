@@ -12,6 +12,7 @@ public final class PostDtos {
 
     /**
      * 글 저장. publish=true면 발행, false면 임시저장.
+     * thumbnailUrl: 대표로 고른 본문 이미지 주소(/files/...). 비우면 본문 첫 이미지.
      * 제목·본문 검사는 서비스에서 "제목 → 본문" 순서로 첫 문제만 알린다 (POST-01).
      */
     public record WriteRequest(
@@ -22,7 +23,7 @@ public final class PostDtos {
             List<String> tags,
             String visibility,
             boolean publish,
-            Long thumbnailImageId) {
+            String thumbnailUrl) {
     }
 
     public record VisibilityRequest(String visibility) {

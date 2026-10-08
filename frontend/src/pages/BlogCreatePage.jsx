@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { api, fieldErrors } from '../api'
+import { blogLink } from '../blogUrl'
 
 const REASONS = {
   FORMAT: '영문 소문자·숫자·하이픈으로 4~32자, 하이픈으로 시작하거나 끝날 수 없어요',
@@ -12,12 +13,19 @@ const REASONS = {
 // BLOG-01 블로그 개설
 export default function BlogCreatePage() {
   const { me, refresh } = useAuth()
-  const navigate = useNavigate()
   const [form, setForm] = useState({ address: '', name: '', description: '' })
   const [check, setCheck] = useState(null)
   const [errors, setErrors] = useState({})
 
-  if (me.blogAddress) return <Navigate to={`/blog/${me.blogAddress}`} replace />
+  // 블로그가 생기면(또는 이미 있으면) 그 블로그로 간다
+  if (me.blogAddress) {
+    const to = blogLink(me.blogAddress)
+    if (to.external) {
+      window.location.replace(to.href)
+      return null
+    }
+    return <Navigate to={to.href} replace />
+  }
 
   const change = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
@@ -30,9 +38,8 @@ export default function BlogCreatePage() {
   const submit = async (e) => {
     e.preventDefault()
     try {
-      const blog = await api('POST', '/api/blogs', form)
-      await refresh() // 헤더의 "내 블로그"를 바로 보이게
-      navigate(`/blog/${blog.address}`)
+      await api('POST', '/api/blogs', form)
+      await refresh() // me.blogAddress가 채워지면 위에서 새 블로그로 옮겨 간다
     } catch (err) {
       setErrors({ ...fieldErrors(err), form: err.fields.length ? '' : err.message })
     }
@@ -58,7 +65,7 @@ export default function BlogCreatePage() {
       {errors.description && <div className="error">{errors.description}</div>}
 
       {errors.form && <div className="error">{errors.form}</div>}
-      <p><button type="submit">만들기</button></p>
+      <p><button type="submit" className="primary">만들기</button></p>
     </form>
   )
 }
