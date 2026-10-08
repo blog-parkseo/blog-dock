@@ -6,6 +6,7 @@ import { mainLink, postPermalink } from '../../blogUrl'
 import { formatDate, formatDateTime } from '../../format'
 import ErrorView from '../../components/ErrorView'
 import SmartLink from '../../components/SmartLink'
+import Avatar from '../../components/Avatar'
 import { useBlog } from './BlogLayout'
 
 // POST-04 글 상세
@@ -40,10 +41,12 @@ export default function PostPage() {
   return (
     <article className="post">
       <header className="post-head">
-        {post.category && <SmartLink to={link(`category/${post.category.id}`)} className="hint">{post.category.name}</SmartLink>}
+        {post.category && <SmartLink to={link(`category/${post.category.id}`)} className="eyebrow">{post.category.name}</SmartLink>}
         <h1>{post.title}</h1>
         <p className="meta">
-          {formatDate(post.publishedAt)}
+          <Avatar name={post.blog.name} size={26} />
+          <span>{post.blog.name}</span><span className="dot">·</span>
+          <time>{formatDate(post.publishedAt)}</time>
           {post.visibility === 'PRIVATE' && <span className="badge">비공개</span>}
         </p>
         {/* 수정·삭제는 주인에게만 보인다 */}
@@ -66,8 +69,8 @@ export default function PostPage() {
         <ShareButton url={postPermalink(address, post.slug)} />
       </div>
       <nav className="neighbors">
-        {post.prev ? <SmartLink to={link(post.prev.slug)}>← 이전 글: {post.prev.title}</SmartLink> : <span />}
-        {post.next ? <SmartLink to={link(post.next.slug)}>다음 글: {post.next.title} →</SmartLink> : <span />}
+        {post.prev ? <SmartLink to={link(post.prev.slug)} className="neighbor"><small>← 이전 글</small><span>{post.prev.title}</span></SmartLink> : <span />}
+        {post.next ? <SmartLink to={link(post.next.slug)} className="neighbor next"><small>다음 글 →</small><span>{post.next.title}</span></SmartLink> : <span />}
       </nav>
       <Comments postId={post.id} onCount={(n) => setPost((p) => ({ ...p, commentCount: n }))} count={post.commentCount} />
     </article>
@@ -102,8 +105,8 @@ function LikeButton({ post, onChange }) {
   }
   return (
     <button onClick={click} disabled={busy || post.isOwner} aria-pressed={post.liked}
-      title={post.isOwner ? '내 글에는 공감할 수 없어요' : undefined} className={post.liked ? 'liked' : ''}>
-      {post.liked ? '♥' : '♡'} 공감 {post.likeCount}
+      title={post.isOwner ? '내 글에는 공감할 수 없어요' : undefined} className={`pill${post.liked ? ' liked' : ''}`}>
+      <span className="heart">{post.liked ? '♥' : '♡'}</span> 공감 {post.likeCount}
     </button>
   )
 }
@@ -120,7 +123,7 @@ function ShareButton({ url }) {
     setDone(true)
     setTimeout(() => setDone(false), 2000)
   }
-  return <button onClick={copy}>{done ? '주소를 복사했어요' : '공유 (주소 복사)'}</button>
+  return <button className="pill" onClick={copy}>{done ? '✓ 주소를 복사했어요' : '🔗 공유 (주소 복사)'}</button>
 }
 
 // CMT-01~03 댓글
@@ -165,7 +168,7 @@ function Comments({ postId, count, onCount }) {
   return (
     <section className="comments">
       <h3>댓글 {count}</h3>
-      <ul>
+      <ul className="comment-list">
         {items.map((c) => <CommentItem key={c.id} comment={c} onChanged={load} />)}
       </ul>
       {me ? (
@@ -177,7 +180,7 @@ function Comments({ postId, count, onCount }) {
           <p><button type="submit" className="primary" disabled={busy}>{busy ? '등록 중…' : '등록'}</button></p>
         </form>
       ) : (
-        <p className="hint"><SmartLink to={loginHref}>로그인</SmartLink>하고 댓글을 남겨 보세요.</p>
+        <p className="comment-login"><SmartLink to={loginHref}>로그인</SmartLink>하고 댓글을 남겨 보세요.</p>
       )}
     </section>
   )
@@ -209,7 +212,9 @@ function CommentItem({ comment, onChanged }) {
 
   return (
     <li className="comment">
-      <p className="meta"><strong>{comment.nickname}</strong> · {formatDateTime(comment.createdAt)}</p>
+      <Avatar name={comment.nickname} src={comment.profileImageUrl} size={36} />
+      <div className="comment-main">
+      <p className="comment-head"><strong>{comment.nickname}</strong> <time>{formatDateTime(comment.createdAt)}</time></p>
       {editing ? (
         <>
           <textarea rows={3} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} aria-label="댓글 수정" />
@@ -225,6 +230,7 @@ function CommentItem({ comment, onChanged }) {
           {comment.canDelete && <button className="link danger" onClick={remove}>삭제</button>}
         </p>
       )}
+      </div>
     </li>
   )
 }

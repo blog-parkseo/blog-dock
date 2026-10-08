@@ -3,6 +3,8 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { BLOG_DOMAIN, hostBlogAddress, mainLink } from './blogUrl'
 import SmartLink from './components/SmartLink'
+import Avatar from './components/Avatar'
+import Logo from './components/Logo'
 import RequireLogin from './components/RequireLogin'
 import ErrorView from './components/ErrorView'
 import HomePage from './pages/HomePage'
@@ -32,20 +34,27 @@ function Header() {
 
   return (
     <header className="site-header">
-      <SmartLink to={mainLink('/')} className="logo">블로그독</SmartLink>
-      <span className="spacer" />
-      {me ? (
-        <>
-          {me.blogAddress && <SmartLink to={mainLink(`/blog/${me.blogAddress}`)}>내 블로그</SmartLink>}
-          <SmartLink to={writeTo} className="button primary">글쓰기</SmartLink>
-          {me.blogAddress && <SmartLink to={mainLink('/manage')}>관리</SmartLink>}
-          {me.role === 'ADMIN' && <SmartLink to={mainLink('/admin')}>서비스 관리</SmartLink>}
-          <SmartLink to={mainLink('/settings')} className="me">{me.nickname}님</SmartLink>
-          <button className="link" onClick={async () => { await logout(); navigate('/') }}>로그아웃</button>
-        </>
-      ) : (
-        <SmartLink to={loginTo}>로그인</SmartLink>
-      )}
+      <div className="site-header-inner">
+        <SmartLink to={mainLink('/')} className="logo"><Logo /> <span>블로그독</span></SmartLink>
+        <span className="spacer" />
+        {me ? (
+          <nav className="header-nav">
+            {me.blogAddress && <SmartLink to={mainLink(`/blog/${me.blogAddress}`)} className="nav-link">내 블로그</SmartLink>}
+            {me.blogAddress && <SmartLink to={mainLink('/manage')} className="nav-link">관리</SmartLink>}
+            {me.role === 'ADMIN' && <SmartLink to={mainLink('/admin')} className="nav-link">서비스 관리</SmartLink>}
+            <SmartLink to={writeTo} className="button primary small">글쓰기</SmartLink>
+            <SmartLink to={mainLink('/settings')} className="me" title="회원정보 수정">
+              <Avatar name={me.nickname} src={me.profileImageUrl} size={30} />
+              <span className="me-name">{me.nickname}님</span>
+            </SmartLink>
+            <button className="link" onClick={async () => { await logout(); navigate('/') }}>로그아웃</button>
+          </nav>
+        ) : (
+          <nav className="header-nav">
+            <SmartLink to={loginTo} className="button primary small">로그인</SmartLink>
+          </nav>
+        )}
+      </div>
     </header>
   )
 }

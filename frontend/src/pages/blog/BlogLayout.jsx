@@ -5,6 +5,7 @@ import { useAuth } from '../../AuthContext'
 import { blogLink } from '../../blogUrl'
 import SmartLink from '../../components/SmartLink'
 import ErrorView from '../../components/ErrorView'
+import Avatar, { colorOf } from '../../components/Avatar'
 
 const BlogContext = createContext(null)
 export const useBlog = () => useContext(BlogContext)
@@ -31,27 +32,38 @@ export default function BlogLayout({ address: hostAddress }) {
   const { blog } = sidebar
   return (
     <BlogContext.Provider value={{ address, blog, sidebar, reload, link }}>
+      <section className="blog-cover" style={{ '--cover': colorOf(address) }}>
+        <SmartLink to={link('')} className="blog-cover-inner">
+          <Avatar name={blog.name} src={blog.profileImageUrl} size={84} className="blog-avatar" />
+          <div>
+            <h1 className="blog-title">{blog.name}</h1>
+            {/* 소개가 비면 소개 자리를 숨긴다 (BLOG-02) */}
+            {blog.description && <p className="blog-desc">{blog.description}</p>}
+          </div>
+        </SmartLink>
+      </section>
       <div className="blog-layout">
         <section className="blog-content"><Outlet /></section>
         <aside className="sidebar">
-          <SmartLink to={link('')} className="profile">
-            <img src={blog.profileImageUrl ?? '/favicon.svg'} alt="" width={64} height={64} />
-            <strong>{blog.name}</strong>
-          </SmartLink>
-          {/* 소개가 비면 소개 자리를 숨긴다 (BLOG-02) */}
-          {blog.description && <p className="hint">{blog.description}</p>}
-          <SearchBox />
-          <nav className="categories">
-            <SmartLink to={link('')}>전체 글 <span>({sidebar.totalCount})</span></SmartLink>
-            {sidebar.categories.map((c) => (
-              <SmartLink key={c.id} to={link(`category/${c.id}`)}>{c.name} <span>({c.count})</span></SmartLink>
-            ))}
-            {sidebar.uncategorizedCount > 0 && (
-              <SmartLink to={link('category/none')}>미분류 <span>({sidebar.uncategorizedCount})</span></SmartLink>
-            )}
-          </nav>
-          <SmartLink to={link('tags')}>태그 모아 보기</SmartLink>
-          {blog.isOwner && <p><SmartLink to={link('edit')}>블로그 정보 수정</SmartLink></p>}
+          <div className="side-card">
+            <SearchBox />
+          </div>
+          <div className="side-card">
+            <h4>카테고리</h4>
+            <nav className="categories">
+              <SmartLink to={link('')}>전체 글 <span>({sidebar.totalCount})</span></SmartLink>
+              {sidebar.categories.map((c) => (
+                <SmartLink key={c.id} to={link(`category/${c.id}`)}>{c.name} <span>({c.count})</span></SmartLink>
+              ))}
+              {sidebar.uncategorizedCount > 0 && (
+                <SmartLink to={link('category/none')}>미분류 <span>({sidebar.uncategorizedCount})</span></SmartLink>
+              )}
+            </nav>
+          </div>
+          <div className="side-card side-links">
+            <SmartLink to={link('tags')}># 태그 모아 보기</SmartLink>
+            {blog.isOwner && <SmartLink to={link('edit')}>블로그 정보 수정</SmartLink>}
+          </div>
         </aside>
       </div>
     </BlogContext.Provider>

@@ -13,5 +13,5 @@ export default function AdminPage() {
 
   if (error) return <ErrorView status={error.status} />
   if (!data) return null
-  return <h1>{data.message}</h1>
+  return <div className="panel"><h1>{data.message}</h1><p className="hint">회원 제한·신고 처리 같은 관리 기능은 2차에서 만들어요.</p></div>
 }

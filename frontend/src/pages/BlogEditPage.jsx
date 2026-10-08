@@ -27,7 +27,7 @@ export default function BlogEditPage() {
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} className="panel">
       <h2>블로그 정보 수정</h2>
       <label htmlFor="address">블로그 주소</label>
       <input id="address" value={address} disabled />

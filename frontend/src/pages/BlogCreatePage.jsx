@@ -46,8 +46,9 @@ export default function BlogCreatePage() {
   }
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} className="panel narrow">
       <h1>블로그 만들기</h1>
+      <p className="hint">블로그 주소와 이름을 정하면 바로 글을 쓸 수 있어요.</p>
       <label htmlFor="address">블로그 주소</label>
       <input id="address" value={form.address} onChange={change('address')} onBlur={checkAddress} />
       <div className="hint">주소는 나중에 바꿀 수 없어요.</div>

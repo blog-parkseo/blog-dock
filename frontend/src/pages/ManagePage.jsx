@@ -21,7 +21,7 @@ export default function ManagePage() {
   const tab = params.get('tab') ?? 'PUBLIC'
   if (!me.blogAddress) return <Navigate to="/blog/new" replace />
   return (
-    <div>
+    <div className="panel">
       <h1>블로그 관리</h1>
       <nav className="tabs">
         {TABS.map((t) => (

@@ -42,7 +42,10 @@ export default function BlogPostsPage() {
   }
   return (
     <div>
-      <h2>{title} {data.totalElements !== undefined && <small className="hint">{data.totalElements}개</small>}</h2>
+      <div className="section-head">
+        <h2>{title}</h2>
+        {data.totalElements !== undefined && <span className="count">{data.totalElements}개의 글</span>}
+      </div>
       <PostList items={data.items} empty={isSearch ? '검색 결과가 없어요.' : page > 0 ? '이 페이지에는 글이 없어요.' : '아직 글이 없어요.'} />
       <Pager page={data.page} totalPages={data.totalPages} toPage={toPage} />
       {page > 0 && !data.items.length && <button onClick={() => setParams({})}>첫 페이지로</button>}

@@ -102,7 +102,7 @@ export default function WritePage() {
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
   return (
-    <div className="write">
+    <div className="write panel">
       <h1>{postId ? (published ? '글 수정' : '임시저장 글 이어 쓰기') : '글쓰기'}</h1>
       <label htmlFor="title">제목</label>
       <input id="title" value={form.title} maxLength={100} onChange={set('title')} placeholder="제목 (100자 이하)" />

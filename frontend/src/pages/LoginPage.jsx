@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { api, fieldErrors } from '../api'
+import Logo from '../components/Logo'
 
 // 로그인 전에 보던 화면으로, 없으면 홈으로. 다른 사이트 주소는 받지 않는다
 const safe = (r) => (r && r.startsWith('/') && !r.startsWith('//') && !r.includes('\\') ? r : '/')
@@ -29,8 +30,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login">
-      <h1>로그인</h1>
+    <div className="login panel narrow">
+      <div className="center"><Logo size={48} /></div>
+      <h1 className="center">블로그독 로그인</h1>
       {error && <div className="error">{error}</div>}
       {providers?.kakao && (
         <a className="button kakao" href={`/api/auth/kakao?redirect=${encodeURIComponent(redirect)}`}>카카오로 시작하기</a>
@@ -38,7 +40,7 @@ export default function LoginPage() {
       {providers && !providers.kakao && <p className="hint">카카오 로그인은 키를 설정하면 나타나요 (README 참고).</p>}
       {providers?.dev && (
         <form onSubmit={submit}>
-          <h2>개발용 로그인</h2>
+          <div className="divider"><span>개발용 로그인</span></div>
           <label htmlFor="nickname">닉네임</label>
           <input id="nickname" value={nickname} maxLength={30} onChange={(e) => setNickname(e.target.value)} />
           <p className="hint">처음 쓰는 닉네임이면 새 회원으로 가입돼요. admin으로 들어가면 관리자예요.</p>

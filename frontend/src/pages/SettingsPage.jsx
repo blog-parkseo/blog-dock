@@ -24,7 +24,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} className="panel narrow">
       <h1>회원정보 수정</h1>
       <label>프로필 이미지</label>
       <ImageField label="프로필 이미지" value={form.profileImageUrl} onChange={(url) => setForm({ ...form, profileImageUrl: url })} />
