@@ -60,7 +60,7 @@ public class BlogService {
         if (!blog.isOwnedBy(memberId)) {
             throw ApiException.forbidden("내 블로그만 고칠 수 있어요");
         }
-        blog.update(req.name().trim(), blankToNull(req.description()));
+        blog.update(req.name().trim(), blankToNull(req.description()), blankToNull(req.profileImageUrl()));
         return BlogResponse.of(blog, memberId);
     }
 

@@ -10,6 +10,13 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  servlet:
+    multipart:
+      # 이미지 한 장 10MB (공통 정책 5). 여유를 조금 둔다
+      max-file-size: 11MB
+      max-request-size: 11MB
+  jackson:
+    time-zone: UTC
 
 server:
   servlet:
@@ -19,3 +26,7 @@ server:
         max-age: 14d
         http-only: true
         same-site: lax
+
+blogdock:
+  # 올린 이미지를 저장할 폴더
+  upload-dir: ./uploads

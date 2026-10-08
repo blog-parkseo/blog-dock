@@ -16,6 +16,14 @@ public class ApiException extends RuntimeException {
         this.field = field;
     }
 
+    public static ApiException unauthorized() {
+        return new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_REQUIRED", "로그인이 필요해요", null);
+    }
+
+    public static ApiException badRequest(String code, String message) {
+        return new ApiException(HttpStatus.BAD_REQUEST, code, message, null);
+    }
+
     public static ApiException notFound(String message) {
         return new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", message, null);
     }

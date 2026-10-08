@@ -49,6 +49,19 @@ public class Member {
         return m;
     }
 
+    /** AUTH-05 닉네임·프로필 이미지 바꾸기. */
+    public void updateProfile(String nickname, String profileImageUrl) {
+        this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    /** 카카오에서 받은 프로필 이미지는 내가 직접 바꾸지 않았을 때만 채운다. */
+    public void fillProfileImageIfEmpty(String url) {
+        if (this.profileImageUrl == null && url != null) {
+            this.profileImageUrl = url;
+        }
+    }
+
     public Long getId() {
         return id;
     }

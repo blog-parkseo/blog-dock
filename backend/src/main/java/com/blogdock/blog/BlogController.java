@@ -23,9 +23,16 @@ import jakarta.validation.Valid;
 public class BlogController {
 
     private final BlogService blogService;
+    private final SidebarService sidebarService;
 
-    public BlogController(BlogService blogService) {
+    public BlogController(BlogService blogService, SidebarService sidebarService) {
         this.blogService = blogService;
+        this.sidebarService = sidebarService;
+    }
+
+    @GetMapping("/api/blogs/{address}/sidebar")
+    public SidebarService.Sidebar sidebar(@PathVariable String address, @AuthenticationPrincipal LoginMember login) {
+        return sidebarService.get(address, LoginMember.idOf(login));
     }
 
     @GetMapping("/api/blogs/address-check")
@@ -36,18 +43,18 @@ public class BlogController {
     @PostMapping("/api/blogs")
     @ResponseStatus(HttpStatus.CREATED)
     public BlogResponse create(@AuthenticationPrincipal LoginMember login, @Valid @RequestBody CreateRequest req) {
-        return blogService.create(login.id(), req);
+        return blogService.create(LoginMember.require(login), req);
     }
 
     /** 비회원도 볼 수 있다. 로그인했으면 주인인지(isOwner) 알려 준다. */
     @GetMapping("/api/blogs/{address}")
     public BlogResponse get(@PathVariable String address, @AuthenticationPrincipal LoginMember login) {
-        return blogService.get(address, login == null ? null : login.id());
+        return blogService.get(address, LoginMember.idOf(login));
     }
 
     @PatchMapping("/api/blogs/{address}")
     public BlogResponse update(@PathVariable String address, @AuthenticationPrincipal LoginMember login,
                                @Valid @RequestBody UpdateRequest req) {
-        return blogService.update(address, login.id(), req);
+        return blogService.update(address, LoginMember.require(login), req);
     }
 }

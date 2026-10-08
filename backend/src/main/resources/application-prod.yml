@@ -1,0 +1,19 @@
+# 운영: SPRING_PROFILES_ACTIVE=prod,kakao (서브도메인을 쓰면 subdomain 도 추가)
+# 가짜 로그인이 꺼지고 MySQL을 쓴다. 접속 정보는 환경 변수로 넣는다.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  h2:
+    console:
+      enabled: false
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+blogdock:
+  upload-dir: ${UPLOAD_DIR:/var/blogdock/uploads}

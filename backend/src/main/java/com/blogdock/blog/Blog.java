@@ -48,9 +48,10 @@ public class Blog {
         return b;
     }
 
-    public void update(String name, String description) {
+    public void update(String name, String description, String profileImageUrl) {
         this.name = name;
         this.description = description;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public boolean isOwnedBy(Long memberId) {

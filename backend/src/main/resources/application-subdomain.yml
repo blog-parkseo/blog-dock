@@ -1,0 +1,10 @@
+# 블로그 주소를 서브도메인(주소.blogdock.localhost)으로 열 때 켠다: SPRING_PROFILES_ACTIVE=subdomain
+# 로그인 쿠키를 blogdock.localhost 와 모든 블로그 주소가 같이 쓰게 한다.
+server:
+  servlet:
+    session:
+      cookie:
+        domain: ${BLOG_DOMAIN:blogdock.localhost}
+
+blogdock:
+  cookie-domain: ${BLOG_DOMAIN:blogdock.localhost}
