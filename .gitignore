@@ -1,0 +1,13 @@
+# backend
+backend/target/
+backend/data/
+backend/uploads/
+# frontend
+frontend/node_modules/
+frontend/dist/
+# local secrets (Kakao keys etc.)
+.env
+.env.local
+backend/src/main/resources/application-local.yml
+.DS_Store
+*.log
