@@ -63,6 +63,14 @@ VITE_BLOG_DOMAIN=blogdock.localhost npm run dev
 
 `SPRING_PROFILES_ACTIVE=prod,kakao`로 실행하면 개발용 로그인이 꺼지고 MySQL을 쓴다. `DB_ADDRESS`, `DB_PORT`(기본 3306), `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `UPLOAD_DIR`을 환경 변수로 넣는다(`backend/src/main/resources/application-prod.yml`).
 
+### 학교 서버에 자동 배포
+
+`.github/workflows/deploy.yml`이 코드를 올릴 때마다 화면과 서버를 jar 하나로 빌드해 학교 서버의 `~/blog-dock`에 올리고 `deploy/deploy.sh`로 다시 띄운다.
+
+1. 저장소 Settings → Secrets and variables → Actions의 **Secrets**에 `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `SSH_ADDRESS`, `SSH_ID`, `SSH_PASSWORD`, `SSH_PORT`를 넣는다.
+2. 같은 화면의 **Variables** 탭에 블로그 포트 `APP_PORT`를 넣는다. 이 값이 없으면 배포하지 않는다.
+3. 코드를 올리면 Actions 탭에서 진행 상황을 볼 수 있다. 서버에서 로그는 `~/blog-dock/logs/app.log`, 손으로 다시 띄우려면 `~/blog-dock/deploy.sh`.
+
 ## 어디에 무엇이 있나
 
 | 위치 | 내용 |
