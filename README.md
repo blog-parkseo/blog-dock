@@ -61,7 +61,7 @@ VITE_BLOG_DOMAIN=blogdock.localhost npm run dev
 
 ### 운영 배포 때
 
-`SPRING_PROFILES_ACTIVE=prod,kakao`로 실행하면 개발용 로그인이 꺼지고 MySQL을 쓴다. `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `UPLOAD_DIR`을 환경 변수로 넣는다(`backend/src/main/resources/application-prod.yml`).
+`SPRING_PROFILES_ACTIVE=prod,kakao`로 실행하면 개발용 로그인이 꺼지고 MySQL을 쓴다. `DB_ADDRESS`, `DB_PORT`(기본 3306), `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `UPLOAD_DIR`을 환경 변수로 넣는다(`backend/src/main/resources/application-prod.yml`).
 
 ## 어디에 무엇이 있나
 

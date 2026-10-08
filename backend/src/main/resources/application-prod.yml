@@ -1,8 +1,9 @@
 # 운영: SPRING_PROFILES_ACTIVE=prod,kakao (서브도메인을 쓰면 subdomain 도 추가)
 # 가짜 로그인이 꺼지고 MySQL을 쓴다. 접속 정보는 환경 변수로 넣는다.
+# DB_ADDRESS·DB_PORT·DB_NAME·DB_USERNAME·DB_PASSWORD (Crowfoot 데이터베이스 탭의 값)
 spring:
   datasource:
-    url: ${DB_URL}
+    url: jdbc:mysql://${DB_ADDRESS}:${DB_PORT:3306}/${DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   h2:
