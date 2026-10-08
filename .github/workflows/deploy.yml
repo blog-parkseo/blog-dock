@@ -1,6 +1,7 @@
 # 코드를 올리면 화면과 서버를 jar 하나로 빌드해서 학교 서버에 배포한다.
 # 필요한 Secrets: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD,
 #                SSH_ADDRESS, SSH_ID, SSH_PASSWORD, SSH_PORT
+# 있으면 카카오 로그인도 켬: KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET
 # 블로그 포트는 Variables의 APP_PORT. 정하기 전에는 배포하지 않는다 (서버를 여럿이 같이 써서 포트가 겹치면 안 됨)
 name: deploy
 
@@ -69,12 +70,14 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
         with:
           host: ${{ secrets.SSH_ADDRESS }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
-          envs: APP_PORT,DB_ADDRESS,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD
+          envs: APP_PORT,DB_ADDRESS,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET
           command_timeout: 5m
           script: |
             chmod +x ~/blog-dock/deploy.sh

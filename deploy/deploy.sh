@@ -12,7 +12,14 @@ mkdir -p uploads logs
 if [ -n "${DB_ADDRESS:-}" ]; then
   umask 077
   {
-    printf 'SPRING_PROFILES_ACTIVE=prod\n'
+    # 카카오 키를 Secrets에 넣었으면 카카오 로그인도 켠다
+    if [ -n "${KAKAO_CLIENT_ID:-}" ]; then
+      printf 'SPRING_PROFILES_ACTIVE=prod,kakao\n'
+      printf 'KAKAO_CLIENT_ID=%q\n' "$KAKAO_CLIENT_ID"
+      printf 'KAKAO_CLIENT_SECRET=%q\n' "${KAKAO_CLIENT_SECRET:-}"
+    else
+      printf 'SPRING_PROFILES_ACTIVE=prod\n'
+    fi
     printf 'SERVER_PORT=%q\n' "${APP_PORT:-8080}"
     printf 'DB_ADDRESS=%q\n' "$DB_ADDRESS"
     printf 'DB_PORT=%q\n' "${DB_PORT:-3306}"
