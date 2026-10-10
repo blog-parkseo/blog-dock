@@ -59,9 +59,11 @@ if [ -f blog-dock.tar.gz ]; then
   gunzip -c blog-dock.tar.gz | docker load
 fi
 docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
+# 도커 기본 네트워크에서는 데이터베이스까지 길이 없어서(No route to host) 서버의 네트워크를 같이 쓴다.
+# 그래서 컨테이너 안에서도 APP_PORT로 바로 연다
 docker run -d --name "$CONTAINER" --restart unless-stopped \
   --user "$(id -u):$(id -g)" \
-  -p "${APP_PORT}:8080" \
+  --network host -e SERVER_PORT="$APP_PORT" \
   --env-file app.env \
   -v "$APP_DIR/uploads:/app/uploads" \
   "$IMAGE" > /dev/null

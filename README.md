@@ -65,7 +65,7 @@ VITE_BLOG_DOMAIN=blogdock.localhost npm run dev
 
 ### 학교 서버에 자동 배포
 
-`.github/workflows/deploy.yml`이 main에 푸시하거나 머지할 때마다 화면과 서버를 jar 하나로 빌드하고 `Dockerfile`로 도커 이미지를 만든다. 이미지를 학교 서버의 `~/blog-dock`에 올리고 `deploy/deploy.sh`가 SSH로 접속해 `blog-dock` 컨테이너를 다시 띄운다 (서버의 `APP_PORT` → 컨테이너 8080).
+`.github/workflows/deploy.yml`이 main에 푸시하거나 머지할 때마다 화면과 서버를 jar 하나로 빌드하고 `Dockerfile`로 도커 이미지를 만든다. 이미지를 학교 서버의 `~/blog-dock`에 올리고 `deploy/deploy.sh`가 SSH로 접속해 `blog-dock` 컨테이너를 다시 띄운다 (서버 네트워크를 같이 써서 `APP_PORT`로 바로 연다).
 
 1. 저장소 Settings → Secrets and variables → Actions의 **Secrets**에 `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `SSH_ADDRESS`, `SSH_ID`, `SSH_PASSWORD`, `SSH_PORT`를 넣는다.
 2. 같은 화면의 **Variables** 탭에 블로그 포트 `APP_PORT`를 넣는다. 이 값이 없으면 배포하지 않는다.
