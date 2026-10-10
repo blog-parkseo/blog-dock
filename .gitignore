@@ -1,0 +1,18 @@
+# backend
+backend/target/
+backend/data/
+backend/uploads/
+# frontend
+frontend/node_modules/
+frontend/dist/
+# local secrets (Kakao keys etc.)
+.env
+.env.local
+backend/src/main/resources/application-local.yml
+.DS_Store
+*.log
+
+# 배포할 때 화면 빌드 결과를 복사해 넣는 곳
+backend/src/main/resources/static/
+deploy/app.jar
+deploy/blog-dock.tar.gz

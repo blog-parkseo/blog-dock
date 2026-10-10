@@ -1,0 +1,104 @@
+erDiagram
+  member ||--o| blog : "개설(1개)"
+  blog ||--o{ category : "보유"
+  blog ||--o{ post : "소유"
+  category |o--o{ post : "분류"
+  blog ||--o{ tag : "보유"
+  post ||--o{ post_tag : ""
+  tag ||--o{ post_tag : ""
+  member ||--o{ image : "업로드"
+  post |o--o{ image : "본문 이미지"
+  post ||--o{ comment : "댓글"
+  member ||--o{ comment : "작성"
+  member ||--o{ post_like : "공감"
+  post ||--o{ post_like : ""
+  member ||--o{ idempotency_record : "요청"
+  member {
+    bigint id PK
+    varchar social_provider UK
+    varchar social_id UK
+    varchar nickname
+    varchar profile_image_url
+    varchar role
+    timestamp created_at
+  }
+  reserved_word {
+    varchar word PK
+    timestamp created_at
+  }
+  blog {
+    bigint id PK
+    bigint owner_id FK,UK
+    varchar address UK
+    varchar name
+    varchar description
+    varchar profile_image_url
+    timestamp created_at
+  }
+  category {
+    bigint id PK
+    bigint blog_id FK
+    varchar name
+    int sort_order
+    timestamp created_at
+  }
+  post {
+    bigint id PK
+    bigint blog_id FK
+    bigint category_id FK
+    varchar slug
+    varchar title
+    mediumtext content_markdown
+    mediumtext content_html
+    mediumtext content_text
+    varchar thumbnail_url
+    varchar visibility
+    varchar status
+    timestamp published_at
+    timestamp created_at
+    timestamp updated_at
+  }
+  tag {
+    bigint id PK
+    bigint blog_id FK
+    varchar name
+    timestamp created_at
+  }
+  post_tag {
+    bigint post_id PK,FK
+    bigint tag_id PK,FK
+    timestamp created_at
+  }
+  image {
+    bigint id PK
+    bigint uploader_id FK
+    bigint post_id FK
+    varchar original_path
+    varchar thumb_path
+    varchar mime_type
+    int size_bytes
+    int width
+    int height
+    timestamp created_at
+  }
+  comment {
+    bigint id PK
+    bigint post_id FK
+    bigint author_id FK
+    varchar content
+    timestamp created_at
+    timestamp updated_at
+  }
+  post_like {
+    bigint user_id PK,FK
+    bigint post_id PK,FK
+    timestamp created_at
+  }
+  idempotency_record {
+    bigint user_id PK,FK
+    char idem_key PK
+    char request_hash
+    int response_status
+    text response_body
+    timestamp created_at
+  }

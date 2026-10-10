@@ -1,0 +1,242 @@
+erDiagram
+  member ||--o{ blog : "개설"
+  topic |o--o{ blog : "주제"
+  blog ||--o{ category : "보유"
+  category |o--o{ category : "하위"
+  blog ||--o{ post : "소유"
+  category |o--o{ post : "분류"
+  blog ||--o{ tag : "보유"
+  post ||--o{ post_tag : ""
+  tag ||--o{ post_tag : ""
+  member ||--o{ image : "업로드"
+  post |o--o{ image : "본문 이미지"
+  post ||--o{ comment : "댓글"
+  member ||--o{ comment : "작성"
+  comment |o--o{ comment : "답글"
+  blog ||--o{ guestbook : "받음"
+  member ||--o{ guestbook : "작성"
+  member ||--o{ post_like : "공감"
+  post ||--o{ post_like : ""
+  member ||--o{ post_save : "저장"
+  post ||--o{ post_save : ""
+  post ||--o{ post_view_log : "조회"
+  member ||--o{ subscription : "구독"
+  blog ||--o{ subscription : "구독 대상"
+  member ||--o{ notification : "수신"
+  blog |o--o{ notification : ""
+  post |o--o{ notification : ""
+  comment |o--o{ notification : ""
+  member ||--o{ user_sanction : "제재 대상"
+  member ||--o{ admin_log : "기록"
+  member ||--o{ report : "신고"
+  member ||--o{ notice : "작성"
+  blog ||--o{ visit_stat : "방문"
+  blog ||--o{ blog_blocked_user : "차단"
+  member ||--o{ blog_blocked_user : ""
+  blog ||--o{ blog_banned_word : "금칙어"
+  member ||--o{ idempotency_record : ""
+
+  member {
+    bigint id PK
+    varchar social_provider UK
+    varchar social_id UK
+    varchar nickname
+    varchar profile_image_url
+    varchar role
+    timestamp created_at
+    timestamp withdrawn_at
+  }
+  topic {
+    int id PK
+    varchar name UK
+    int sort_order
+    timestamp created_at
+  }
+  reserved_word {
+    varchar word PK
+    timestamp created_at
+  }
+  blog {
+    bigint id PK
+    bigint owner_id FK
+    int topic_id FK
+    varchar address UK
+    varchar name
+    varchar description
+    varchar profile_image_url
+    varchar skin
+    varchar background_image_url
+    timestamp restricted_at
+    varchar restricted_reason
+    timestamp created_at
+    timestamp deleted_at
+    bigint active_owner_id UK
+  }
+  category {
+    bigint id PK
+    bigint blog_id FK
+    bigint parent_id FK
+    varchar name
+    int sort_order
+    boolean is_private
+    timestamp created_at
+    bigint parent_key
+  }
+  post {
+    bigint id PK
+    bigint blog_id FK
+    bigint category_id FK
+    varchar slug
+    varchar title
+    mediumtext content_markdown
+    mediumtext content_html
+    mediumtext content_text
+    varchar thumbnail_url
+    varchar visibility
+    varchar status
+    boolean comment_allowed
+    timestamp scheduled_at
+    timestamp published_at
+    timestamp hidden_at
+    varchar hidden_reason
+    timestamp created_at
+    timestamp updated_at
+  }
+  tag {
+    bigint id PK
+    bigint blog_id FK
+    varchar name
+    timestamp created_at
+  }
+  post_tag {
+    bigint post_id PK
+    bigint tag_id PK
+    timestamp created_at
+  }
+  image {
+    bigint id PK
+    bigint uploader_id FK
+    bigint post_id FK
+    varchar original_path
+    varchar thumb_path
+    varchar mime_type
+    int size_bytes
+    int width
+    int height
+    timestamp created_at
+  }
+  comment {
+    bigint id PK
+    bigint post_id FK
+    bigint author_id FK
+    bigint parent_id FK
+    varchar content
+    boolean is_secret
+    timestamp hidden_at
+    varchar hidden_reason
+    timestamp created_at
+    timestamp updated_at
+    timestamp deleted_at
+  }
+  guestbook {
+    bigint id PK
+    bigint blog_id FK
+    bigint author_id FK
+    varchar content
+    timestamp created_at
+  }
+  post_like {
+    bigint user_id PK
+    bigint post_id PK
+    timestamp created_at
+  }
+  post_save {
+    bigint user_id PK
+    bigint post_id PK
+    timestamp created_at
+  }
+  post_view_log {
+    bigint id PK
+    bigint post_id FK
+    char viewer_key
+    timestamp viewed_at
+    timestamp created_at
+  }
+  subscription {
+    bigint subscriber_id PK
+    bigint blog_id PK
+    timestamp created_at
+  }
+  notification {
+    bigint id PK
+    bigint user_id FK
+    bigint blog_id FK
+    bigint post_id FK
+    bigint comment_id FK
+    varchar type
+    bigint actor_id
+    boolean is_read
+    timestamp created_at
+  }
+  user_sanction {
+    bigint id PK
+    bigint user_id FK
+    bigint admin_id
+    varchar reason
+    timestamp starts_at
+    timestamp ends_at
+    timestamp released_at
+    timestamp created_at
+  }
+  admin_log {
+    bigint id PK
+    bigint admin_id FK
+    varchar action
+    varchar target_type
+    bigint target_id
+    varchar reason
+    timestamp created_at
+  }
+  report {
+    bigint id PK
+    bigint reporter_id FK
+    varchar target_type
+    bigint target_id
+    varchar reason_code
+    varchar status
+    bigint handled_by
+    timestamp created_at
+    timestamp handled_at
+  }
+  notice {
+    bigint id PK
+    bigint admin_id FK
+    varchar title
+    text content
+    timestamp created_at
+  }
+  visit_stat {
+    bigint blog_id PK
+    date visit_date PK
+    int visitor_count
+    timestamp created_at
+  }
+  blog_blocked_user {
+    bigint blog_id PK
+    bigint user_id PK
+    timestamp created_at
+  }
+  blog_banned_word {
+    bigint id PK
+    bigint blog_id FK
+    varchar word
+    timestamp created_at
+  }
+  idempotency_record {
+    bigint user_id PK
+    char idem_key PK
+    char request_hash
+    int response_status
+    text response_body
+    timestamp created_at
+  }
