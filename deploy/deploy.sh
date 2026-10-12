@@ -61,15 +61,35 @@ fi
 docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
 
 # 다른 학생들 블로그처럼 -p 포트:8080 으로 열어야 학교 안 다른 컴퓨터에서 들어올 수 있다.
-# 그런데 도커 기본 네트워크에서 데이터베이스까지 길이 없으면(No route to host) 블로그가 켜지지 않는다.
-# 그래서 먼저 기본 네트워크에서 데이터베이스에 닿는지 확인하고, 안 닿을 때만 서버 네트워크를 같이 쓴다.
+# 그런데 컨테이너 네트워크에서 데이터베이스까지 길이 없으면(No route to host) 블로그가 켜지지 않는다.
+# 데이터베이스 주소가 이 서버의 다른 도커 네트워크 주소 범위와 겹치면 그렇게 되므로,
+# 겹치지 않는 우리 전용 네트워크를 만들어 먼저 시도하고, 그래도 안 닿을 때만 서버 네트워크를 같이 쓴다.
 DB_ADDRESS=$(grep '^DB_ADDRESS=' app.env | cut -d= -f2-)
 DB_PORT=$(grep '^DB_PORT=' app.env | cut -d= -f2-)
-if docker run --rm --entrypoint bash "$IMAGE" -c "timeout 8 bash -c 'exec 3<>/dev/tcp/${DB_ADDRESS}/${DB_PORT}'" 2>/dev/null; then
-  echo "도커 기본 네트워크에서 데이터베이스 연결 확인 → -p ${APP_PORT}:8080 으로 엽니다"
+DB_IP=$(getent ahostsv4 "$DB_ADDRESS" | awk 'NR==1{print $1}')
+echo "데이터베이스로 가는 길: $(ip route get "$DB_IP" 2>/dev/null | grep -o 'dev [^ ]*' || echo '알 수 없음')"
+
+can_reach_db() {  # $1 = 도커 네트워크 이름
+  docker run --rm --network "$1" --entrypoint bash "$IMAGE" \
+    -c "timeout 8 bash -c 'exec 3<>/dev/tcp/${DB_IP:-$DB_ADDRESS}/${DB_PORT}'" 2>/dev/null
+}
+
+NET=blog-dock-net
+if ! docker network inspect "$NET" > /dev/null 2>&1; then
+  for SUBNET in 192.168.238.0/24 10.238.38.0/24 172.31.238.0/24; do
+    case "$DB_IP" in "${SUBNET%.0/24}".*) continue;; esac
+    docker network create --subnet "$SUBNET" "$NET" > /dev/null 2>&1 && { echo "도커 네트워크 $NET 만듦 ($SUBNET)"; break; }
+  done
+fi
+
+if docker network inspect "$NET" > /dev/null 2>&1 && can_reach_db "$NET"; then
+  echo "$NET 에서 데이터베이스 연결 확인 → -p ${APP_PORT}:8080 으로 엽니다"
+  NETWORK_ARGS=(--network "$NET" -p "${APP_PORT}:8080")
+elif can_reach_db bridge; then
+  echo "기본 네트워크에서 데이터베이스 연결 확인 → -p ${APP_PORT}:8080 으로 엽니다"
   NETWORK_ARGS=(-p "${APP_PORT}:8080")
 else
-  echo "도커 기본 네트워크에서는 데이터베이스에 닿지 않아요 → 서버 네트워크를 같이 씁니다 (학교 안에서 접속이 막힐 수 있어요)"
+  echo "컨테이너 네트워크에서는 데이터베이스에 닿지 않아요 → 서버 네트워크를 같이 씁니다 (학교 안에서 접속이 막힐 수 있어요)"
   NETWORK_ARGS=(--network host -e SERVER_PORT="$APP_PORT")
 fi
 docker run -d --name "$CONTAINER" --restart unless-stopped \
