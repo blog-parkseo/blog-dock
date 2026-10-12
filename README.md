@@ -6,7 +6,7 @@
 
 요구사항 명세서의 1차 범위(P0 24개 + P1 11개)와 1차 ERD(테이블 11개)대로 만들었다.
 
-- 회원: 카카오 로그인(키를 넣으면 켜짐), 개발용 닉네임 로그인, 로그아웃, 14일 로그인 유지, 회원정보 수정
+- 회원: 카카오 로그인(키를 넣으면 켜짐), 닉네임 로그인, 로그아웃, 14일 로그인 유지, 회원정보 수정
 - 블로그: 개설(주소 규칙·예약어 검사), 정보·프로필 이미지 수정, 사이드바(카테고리별 글 수)
 - 글: 마크다운·보이는 대로 편집 에디터, 이미지 업로드(10MB, 썸네일), 대표 이미지, 공개·비공개, 임시저장, 수정·삭제, 이전·다음 글, 주소 복사
 - 카테고리(추가·이름 변경·삭제·순서), 태그(10개까지, 태그별 목록, 태그 모아 보기), 블로그 내 검색
@@ -29,7 +29,7 @@ npm install
 npm run dev
 ```
 
-브라우저에서 `http://localhost:5173`을 연다. 로그인 화면의 "개발용 로그인"에 아무 닉네임이나 넣으면 가입된다. `admin`으로 들어가면 관리자다.
+브라우저에서 `http://localhost:5173`을 연다. 로그인 화면의 "닉네임으로 로그인"에 아무 닉네임이나 넣으면 가입된다. `admin`으로 들어가면 관리자다.
 
 - DB는 `backend/data/` 폴더의 H2 파일이다. 처음부터 다시 하고 싶으면 백엔드를 끄고 이 폴더를 지운다.
 - 올린 이미지는 `backend/uploads/`에 저장된다.
@@ -61,7 +61,7 @@ VITE_BLOG_DOMAIN=blogdock.localhost npm run dev
 
 ### 운영 배포 때
 
-`SPRING_PROFILES_ACTIVE=prod,kakao`로 실행하면 개발용 로그인이 꺼지고 MySQL을 쓴다. `DB_ADDRESS`, `DB_PORT`(기본 3306), `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `UPLOAD_DIR`을 환경 변수로 넣는다(`backend/src/main/resources/application-prod.yml`).
+`SPRING_PROFILES_ACTIVE=prod,kakao`로 실행하면 MySQL을 쓴다. 닉네임 로그인은 켜져 있지만 `admin`으로는 못 들어간다(끄려면 `DEV_LOGIN=false`). `DB_ADDRESS`, `DB_PORT`(기본 3306), `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `UPLOAD_DIR`을 환경 변수로 넣는다(`backend/src/main/resources/application-prod.yml`).
 
 ### 학교 서버에 자동 배포
 

@@ -40,10 +40,10 @@ export default function LoginPage() {
       {providers && !providers.kakao && <p className="hint">카카오 로그인은 키를 설정하면 나타나요 (README 참고).</p>}
       {providers?.dev && (
         <form onSubmit={submit}>
-          <div className="divider"><span>개발용 로그인</span></div>
+          <div className="divider"><span>닉네임으로 로그인</span></div>
           <label htmlFor="nickname">닉네임</label>
           <input id="nickname" value={nickname} maxLength={30} onChange={(e) => setNickname(e.target.value)} />
-          <p className="hint">처음 쓰는 닉네임이면 새 회원으로 가입돼요. admin으로 들어가면 관리자예요.</p>
+          <p className="hint">처음 쓰는 닉네임이면 새 회원으로 가입돼요.</p>
           <button type="submit" className="primary">로그인</button>
         </form>
       )}
