@@ -53,8 +53,8 @@ jobs:
 
       - name: 도커 이미지 만들기
         run: |
-          docker build -t blog-dock:latest .
-          docker save blog-dock:latest | gzip > deploy/blog-dock.tar.gz
+          docker build -t seohyun-blog:latest .
+          docker save seohyun-blog:latest | gzip > deploy/seohyun-blog.tar.gz
 
       - name: 서버로 파일 보내기
         uses: appleboy/scp-action@v0.1.7
@@ -63,7 +63,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
-          source: deploy/blog-dock.tar.gz,deploy/deploy.sh
+          source: deploy/seohyun-blog.tar.gz,deploy/deploy.sh
           target: blog-dock
           strip_components: 1
 

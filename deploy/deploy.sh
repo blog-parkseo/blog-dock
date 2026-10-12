@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # 서버에서 블로그를 도커로 (다시) 띄우는 스크립트.
-# GitHub Actions가 도커 이미지(blog-dock.tar.gz)와 이 파일을 ~/blog-dock 에 올린 뒤 실행한다.
+# GitHub Actions가 도커 이미지(seohyun-blog.tar.gz)와 이 파일을 ~/blog-dock 에 올린 뒤 실행한다.
 # 손으로 다시 띄울 때: cd ~/blog-dock && ./deploy.sh
 set -euo pipefail
 
 APP_DIR="$HOME/blog-dock"
-IMAGE=blog-dock:latest
-CONTAINER=blog-dock
+IMAGE=seohyun-blog:latest
+CONTAINER=seohyun-blog
 cd "$APP_DIR"
 mkdir -p uploads logs
 
@@ -54,11 +54,11 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # 새 이미지를 불러와서 컨테이너를 바꿔 끼운다
-if [ -f blog-dock.tar.gz ]; then
+if [ -f seohyun-blog.tar.gz ]; then
   echo "도커 이미지 불러오는 중"
-  gunzip -c blog-dock.tar.gz | docker load
+  gunzip -c seohyun-blog.tar.gz | docker load
 fi
-docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
+docker rm -f "$CONTAINER" blog-dock > /dev/null 2>&1 || true  # blog-dock: 이름 바꾸기 전 컨테이너
 
 # 다른 학생들 블로그처럼 -p 포트:8080 으로 열어야 학교 안 다른 컴퓨터에서 들어올 수 있다.
 # 그런데 컨테이너 네트워크에서 데이터베이스까지 길이 없으면(No route to host) 블로그가 켜지지 않는다.
@@ -98,6 +98,7 @@ docker run -d --name "$CONTAINER" --restart unless-stopped \
   --env-file app.env \
   -v "$APP_DIR/uploads:/app/uploads" \
   "$IMAGE" > /dev/null
+docker rmi blog-dock:latest > /dev/null 2>&1 || true; rm -f blog-dock.tar.gz  # 이름 바꾸기 전 이미지
 docker image prune -f > /dev/null 2>&1 || true
 echo "블로그 컨테이너 시작 (포트 ${APP_PORT})"
 
