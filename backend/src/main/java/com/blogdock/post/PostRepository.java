@@ -56,6 +56,23 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             order by p.publishedAt desc, p.id desc""")
     List<Post> findFeed(Long memberId, Instant cursorAt, Long cursorId, Pageable pageable);
 
+    /** HOME-02 인기 글: since 이후 받은 공감 수 [글 id, 개수]. 공개·발행 글만. */
+    @Query("""
+            select l.postId, count(l) from PostLike l, Post p
+            where p.id = l.postId and l.createdAt >= :since
+              and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
+            group by l.postId""")
+    List<Object[]> countRecentLikes(Instant since);
+
+    /** HOME-02 인기 글: since 이후 받은 댓글 수 [글 id, 개수]. 글쓴이 본인 댓글은 빼고 센다. */
+    @Query("""
+            select c.postId, count(c) from Comment c, Post p, Blog b
+            where p.id = c.postId and b.id = p.blogId and c.createdAt >= :since
+              and c.authorId <> b.ownerId
+              and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
+            group by c.postId""")
+    List<Object[]> countRecentComments(Instant since);
+
     /** BLOG-04 사이드바: 카테고리별 글 수 (카테고리 없음 = null). */
     @Query("""
             select p.categoryId, count(p) from Post p

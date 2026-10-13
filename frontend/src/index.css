@@ -150,6 +150,15 @@ legend { font-weight: 600; font-size: 14px; padding: 0 4px; color: var(--ink); }
 .blog-title { font-family: var(--serif); font-size: 2rem; margin: 0; }
 .blog-desc { margin: 6px 0 0; color: #5a544d; }
 .blog-subscribe { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; padding: 0 36px 26px; margin-top: -12px; }
+.popular-list { list-style: none; padding: 0; margin: 0 0 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; }
+.popular-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-height: 72px; }
+.popular-item:hover { border-color: color-mix(in srgb, var(--accent) 40%, #fff); }
+.popular-item .rank { flex: none; width: 26px; font-family: var(--serif); font-size: 1.4rem; font-weight: 700; color: var(--accent); text-align: center; }
+.popular-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.popular-text strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.popular-text small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.popular-item img { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 10px; }
+.popular-empty { margin: 0 0 40px; padding: 28px 16px; }
 .tab-count { display: inline-block; margin-left: 6px; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--line); color: var(--muted); font-size: 12px; font-weight: 600; text-align: center; }
 .subscriber-count { color: #5a544d; font-size: 14px; }
 button.subscribe { padding: 8px 18px; font-size: 14px; border-radius: 999px; }
@@ -283,6 +292,7 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
   .post-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .blog-cover-inner { padding: 24px 20px; gap: 12px; flex-direction: column; align-items: flex-start; }
   .blog-subscribe { padding: 0 20px 20px; margin-top: -4px; }
+  .popular-list { grid-template-columns: minmax(0, 1fr); }
   .blog-cover .avatar { width: 60px !important; height: 60px !important; }
   .blog-title { font-size: 1.45rem; }
   .blog-layout { grid-template-columns: minmax(0, 1fr); }

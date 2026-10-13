@@ -322,7 +322,7 @@ public class PostService {
                 result.getTotalElements(), result.hasNext());
     }
 
-    private List<PostSummary> summaries(List<Post> posts) {
+    List<PostSummary> summaries(List<Post> posts) {
         if (posts.isEmpty()) {
             return List.of();
         }

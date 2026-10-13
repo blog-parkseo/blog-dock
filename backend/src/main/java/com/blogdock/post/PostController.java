@@ -1,5 +1,7 @@
 package com.blogdock.post;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,10 +35,12 @@ public class PostController {
 
     private final PostService postService;
     private final Idempotency idempotency;
+    private final PopularPostService popularPostService;
 
-    public PostController(PostService postService, Idempotency idempotency) {
+    public PostController(PostService postService, Idempotency idempotency, PopularPostService popularPostService) {
         this.postService = postService;
         this.idempotency = idempotency;
+        this.popularPostService = popularPostService;
     }
 
     /** 블로그 글 목록. category=id|none, tag=이름, q=검색어 (모두 선택). */
@@ -54,6 +58,12 @@ public class PostController {
     public PostDetail detail(@PathVariable String address, @PathVariable String slug,
                              @AuthenticationPrincipal LoginMember login) {
         return postService.detail(address, slug, LoginMember.idOf(login));
+    }
+
+    /** HOME-02 인기 글 (10분마다 새로 계산). */
+    @GetMapping("/api/home/popular")
+    public List<PostSummary> popular() {
+        return popularPostService.popular();
     }
 
     @GetMapping("/api/home/posts")
