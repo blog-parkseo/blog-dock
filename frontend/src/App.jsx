@@ -37,7 +37,7 @@ function Header() {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <SmartLink to={mainLink('/')} className="logo"><Logo /> <span>서현 블로그</span></SmartLink>
+        <SmartLink to={mainLink('/')} className="logo"><Logo /> <span>블로그독</span></SmartLink>
         <span className="spacer" />
         {me ? (
           <nav className="header-nav">

@@ -44,7 +44,7 @@ export default function LoginPage() {
   return (
     <div className="login panel narrow">
       <div className="center"><Logo size={48} /></div>
-      <h1 className="center">서현 블로그 로그인</h1>
+      <h1 className="center">블로그독 로그인</h1>
 
       <form onSubmit={submit}>
         <label htmlFor="loginId">아이디</label>
