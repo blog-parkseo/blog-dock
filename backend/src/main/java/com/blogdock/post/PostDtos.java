@@ -50,6 +50,10 @@ public final class PostDtos {
     public record PageResponse<T>(List<T> items, int page, int totalPages, long totalElements, boolean hasNext) {
     }
 
+    /** MNG-01 탭별 글 수. */
+    public record MyPostCounts(long publicCount, long privateCount, long draftCount) {
+    }
+
     public record HomeResponse(List<PostSummary> items, String nextCursor) {
     }
 

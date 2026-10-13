@@ -7,10 +7,11 @@ import { formatDate } from '../format'
 import SmartLink from '../components/SmartLink'
 import { Pager } from '../components/PostList'
 
+// count: 탭 옆에 보여 줄 글 수의 이름 (/api/me/posts/counts)
 const TABS = [
-  { key: 'PUBLIC', label: '공개' },
-  { key: 'PRIVATE', label: '비공개' },
-  { key: 'DRAFT', label: '임시저장' },
+  { key: 'PUBLIC', label: '공개', count: 'publicCount' },
+  { key: 'PRIVATE', label: '비공개', count: 'privateCount' },
+  { key: 'DRAFT', label: '임시저장', count: 'draftCount' },
   { key: 'CATEGORIES', label: '카테고리' },
 ]
 
@@ -19,21 +20,29 @@ export default function ManagePage() {
   const { me } = useAuth()
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') ?? 'PUBLIC'
+  const [counts, setCounts] = useState(null)
+  // 글을 지우거나 공개 범위를 바꾸면 다시 센다
+  const loadCounts = useCallback(() => {
+    if (me.blogAddress) api('GET', '/api/me/posts/counts').then(setCounts).catch(() => {})
+  }, [me.blogAddress])
+  useEffect(() => { loadCounts() }, [loadCounts])
   if (!me.blogAddress) return <Navigate to="/blog/new" replace />
   return (
     <div className="panel">
       <h1>블로그 관리</h1>
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t.key} className={tab === t.key ? 'active' : ''} onClick={() => setParams({ tab: t.key })}>{t.label}</button>
+          <button key={t.key} className={tab === t.key ? 'active' : ''} onClick={() => setParams({ tab: t.key })}>
+            {t.label}{t.count && counts && <span className="tab-count">{counts[t.count]}</span>}
+          </button>
         ))}
       </nav>
-      {tab === 'CATEGORIES' ? <CategoryManager address={me.blogAddress} /> : <MyPosts status={tab} />}
+      {tab === 'CATEGORIES' ? <CategoryManager address={me.blogAddress} /> : <MyPosts status={tab} onChange={loadCounts} />}
     </div>
   )
 }
 
-function MyPosts({ status }) {
+function MyPosts({ status, onChange }) {
   const [params] = useSearchParams()
   const page = Number(params.get('page') ?? 0) || 0
   const [data, setData] = useState(null)
@@ -48,10 +57,12 @@ function MyPosts({ status }) {
     if (!window.confirm(`'${p.title || '제목 없음'}' 글을 지울까요?`)) return
     await api('DELETE', `/api/posts/${p.id}`)
     load()
+    onChange()
   }
   const toggle = async (p) => {
     await api('PATCH', `/api/posts/${p.id}/visibility`, { visibility: p.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC' })
     load()
+    onChange()
   }
   const toPage = (n) => `?tab=${status}&page=${n}`
 

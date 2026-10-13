@@ -130,4 +130,26 @@ class SubscriptionTest {
                 .andExpect(jsonPath("$.items[0].title").value("에이 첫 글"))
                 .andExpect(jsonPath("$.nextCursor").isEmpty());
     }
+
+    /** MNG-01 관리 화면 탭별 글 수 (같은 도우미를 쓰려고 여기에 둔다). */
+    @Test
+    void my_post_counts_by_tab() throws Exception {
+        MockHttpSession owner = blogOwner("count-owner", "count-blog");
+        publish(owner, "공개 1", "PUBLIC");
+        publish(owner, "공개 2", "PUBLIC");
+        publish(owner, "비공개", "PRIVATE");
+        Map<String, Object> draft = new HashMap<>();
+        draft.put("title", "임시");
+        draft.put("contentMarkdown", "<p>임시</p>");
+        draft.put("contentHtml", "<p>임시</p>");
+        draft.put("publish", false);
+        draft.put("visibility", "PUBLIC");
+        send(post("/api/posts"), owner, draft).andExpect(status().isCreated());
+
+        mvc.perform(get("/api/me/posts/counts").session(owner))
+                .andExpect(jsonPath("$.publicCount").value(2))
+                .andExpect(jsonPath("$.privateCount").value(1))
+                .andExpect(jsonPath("$.draftCount").value(1));
+        mvc.perform(get("/api/me/posts/counts").session(login("count-noblog"))).andExpect(status().isConflict());
+    }
 }

@@ -79,6 +79,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             order by p.publishedAt asc, p.id asc""")
     List<Post> findNewer(Long blogId, boolean owner, Instant at, Long id, Pageable one);
 
+    /** MNG-01 탭별 글 수: [상태, 공개 범위, 개수]. */
+    @Query("select p.status, p.visibility, count(p) from Post p where p.blogId = :blogId group by p.status, p.visibility")
+    List<Object[]> countByStatus(Long blogId);
+
     /** MNG-01 임시저장 글. 최근에 고친 순. */
     Page<Post> findByBlogIdAndStatusOrderByUpdatedAtDescIdDesc(Long blogId, String status, Pageable pageable);
 

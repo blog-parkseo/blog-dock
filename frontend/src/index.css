@@ -150,6 +150,7 @@ legend { font-weight: 600; font-size: 14px; padding: 0 4px; color: var(--ink); }
 .blog-title { font-family: var(--serif); font-size: 2rem; margin: 0; }
 .blog-desc { margin: 6px 0 0; color: #5a544d; }
 .blog-subscribe { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; padding: 0 36px 26px; margin-top: -12px; }
+.tab-count { display: inline-block; margin-left: 6px; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--line); color: var(--muted); font-size: 12px; font-weight: 600; text-align: center; }
 .subscriber-count { color: #5a544d; font-size: 14px; }
 button.subscribe { padding: 8px 18px; font-size: 14px; border-radius: 999px; }
 button.subscribe.subscribed { background: var(--surface); }

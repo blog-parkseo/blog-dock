@@ -28,6 +28,7 @@ import com.blogdock.image.ImageService;
 import com.blogdock.post.PostDtos.BlogRef;
 import com.blogdock.post.PostDtos.CategoryRef;
 import com.blogdock.post.PostDtos.HomeResponse;
+import com.blogdock.post.PostDtos.MyPostCounts;
 import com.blogdock.post.PostDtos.Neighbor;
 import com.blogdock.post.PostDtos.PageResponse;
 import com.blogdock.post.PostDtos.PostDetail;
@@ -274,6 +275,25 @@ public class PostService {
             default -> throw ApiException.invalid("status", "PUBLIC, PRIVATE, DRAFT 중 하나를 골라 주세요");
         };
         return page(result);
+    }
+
+    /** MNG-01 탭별 글 수. 임시저장은 공개 범위와 상관없이 센다. */
+    @Transactional(readOnly = true)
+    public MyPostCounts myCounts(Long memberId) {
+        Blog blog = blogRepository.findByOwnerId(memberId)
+                .orElseThrow(() -> ApiException.conflict("BLOG_REQUIRED", "블로그를 먼저 만들어 주세요"));
+        long published = 0, privates = 0, drafts = 0;
+        for (Object[] row : postRepository.countByStatus(blog.getId())) {
+            long n = (Long) row[2];
+            if (Post.DRAFT.equals(row[0])) {
+                drafts += n;
+            } else if (Post.PRIVATE.equals(row[1])) {
+                privates += n;
+            } else {
+                published += n;
+            }
+        }
+        return new MyPostCounts(published, privates, drafts);
     }
 
     /** 글을 볼 수 있는지 한 곳에서 판단한다 (공통 정책 2). 임시저장 글은 주인만. */

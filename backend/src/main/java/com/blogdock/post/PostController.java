@@ -100,4 +100,10 @@ public class PostController {
                                           @RequestParam(defaultValue = "0") int page) {
         return postService.mine(LoginMember.require(login), status, page);
     }
+
+    /** MNG-01 탭별 글 수 (공개·비공개·임시저장). */
+    @GetMapping("/api/me/posts/counts")
+    public PostDtos.MyPostCounts myCounts(@AuthenticationPrincipal LoginMember login) {
+        return postService.myCounts(LoginMember.require(login));
+    }
 }
