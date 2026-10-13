@@ -48,6 +48,8 @@ export default function BlogLayout({ address: hostAddress }) {
         <div className="blog-subscribe">
           <span className="subscriber-count">구독자 {blog.subscriberCount}명</span>
           <SubscribeButton blog={blog} address={address} onChange={setSubscription} />
+          {/* BLOG-02: 주인에게는 구독 대신 이름·소개 수정 버튼 */}
+          {blog.isOwner && <SmartLink to={link('edit')} className="button small cover-edit">✎ 블로그 이름·소개 수정</SmartLink>}
         </div>
       </section>
       <div className="blog-layout">
