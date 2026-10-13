@@ -17,11 +17,19 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "social_provider", nullable = false)
+    @Column(name = "social_provider")
     private String socialProvider;
 
-    @Column(name = "social_id", nullable = false)
+    @Column(name = "social_id")
     private String socialId;
+
+    /** 아이디로 가입한 회원의 아이디. 카카오 회원은 비어 있다. */
+    @Column(name = "login_id")
+    private String loginId;
+
+    /** BCrypt로 바꾼 비밀번호. 원래 비밀번호는 저장하지 않는다. */
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     @Column(nullable = false)
     private String nickname;
@@ -49,6 +57,21 @@ public class Member {
         return m;
     }
 
+    /** 아이디·비밀번호로 가입. 항상 일반 회원이다. */
+    public static Member joinWithPassword(String loginId, String passwordHash, String nickname) {
+        Member m = new Member();
+        m.loginId = loginId;
+        m.passwordHash = passwordHash;
+        m.nickname = nickname;
+        m.role = "MEMBER";
+        m.createdAt = Instant.now();
+        return m;
+    }
+
+    public void changePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     /** AUTH-05 닉네임·프로필 이미지 바꾸기. */
     public void updateProfile(String nickname, String profileImageUrl) {
         this.nickname = nickname;
@@ -64,6 +87,14 @@ public class Member {
 
     public Long getId() {
         return id;
+    }
+
+    public String getLoginId() {
+        return loginId;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     public String getNickname() {

@@ -4,12 +4,14 @@ import java.util.Map;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.blogdock.common.ApiException;
@@ -38,6 +40,25 @@ public class AuthController {
         this.devLoginAdmin = devLoginAdmin;
     }
 
+    /** AUTH-01 아이디·비밀번호 회원가입. 가입하면 바로 로그인된 상태가 된다. */
+    @PostMapping("/api/auth/signup")
+    @ResponseStatus(HttpStatus.CREATED)
+    public MeResponse signup(@Valid @RequestBody SignupRequest req,
+                             HttpServletRequest request, HttpServletResponse response) {
+        Member member = authService.signup(req);
+        loginSession.save(member, request, response);
+        return authService.me(member.getId());
+    }
+
+    /** AUTH-01 아이디·비밀번호 로그인. */
+    @PostMapping("/api/auth/login")
+    public MeResponse login(@Valid @RequestBody LoginRequest req,
+                            HttpServletRequest request, HttpServletResponse response) {
+        Member member = authService.login(req);
+        loginSession.save(member, request, response);
+        return authService.me(member.getId());
+    }
+
     /**
      * 닉네임만 치는 가짜 로그인. 카카오 키 없이도 쓸 수 있다.
      * blogdock.dev-login.enabled=false 이면 꺼진다. dev-login.admin=false 이면 admin 계정으로는 못 들어간다.
@@ -61,6 +82,7 @@ public class AuthController {
     public Map<String, Boolean> providers() {
         return Map.of(
                 "kakao", kakao.getIfAvailable() != null,
+                "password", true,
                 "dev", devLoginEnabled);
     }
 

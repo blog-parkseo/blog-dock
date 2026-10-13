@@ -20,11 +20,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => { refresh() }, [refresh])
 
-  const login = async (nickname) => setMe(await api('POST', '/api/auth/dev-login', { nickname }))
+  // AUTH-01 아이디·비밀번호 로그인과 회원가입. 가입하면 바로 로그인된다
+  const login = async (loginId, password) => setMe(await api('POST', '/api/auth/login', { loginId, password }))
+  const signup = async (form) => setMe(await api('POST', '/api/auth/signup', form))
+  // 내 맥에서 연습할 때 쓰는 닉네임 로그인 (운영에서는 꺼져 있다)
+  const devLogin = async (nickname) => setMe(await api('POST', '/api/auth/dev-login', { nickname }))
   const logout = async () => { await api('POST', '/api/auth/logout'); setMe(null) }
 
   return (
-    <AuthContext.Provider value={{ me, loading, refresh, login, logout }}>
+    <AuthContext.Provider value={{ me, loading, refresh, login, signup, devLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )

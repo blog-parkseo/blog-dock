@@ -29,6 +29,10 @@ if [ -n "${DB_ADDRESS:-}" ]; then
     echo "DB_NAME=$DB_NAME"
     echo "DB_USERNAME=$DB_USERNAME"
     echo "DB_PASSWORD=$DB_PASSWORD"
+    # 관리자(아이디 admin) 비밀번호. Secrets에 넣었을 때만
+    if [ -n "${ADMIN_PASSWORD:-}" ]; then
+      echo "ADMIN_PASSWORD=$ADMIN_PASSWORD"
+    fi
   } > app.env
 fi
 if [ ! -f app.env ]; then

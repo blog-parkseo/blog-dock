@@ -30,3 +30,5 @@ server:
 blogdock:
   # 올린 이미지를 저장할 폴더
   upload-dir: ./uploads
+  # 관리자(아이디 admin) 비밀번호. 내 맥에서 연습할 때만 쓰는 값이고, 운영은 ADMIN_PASSWORD로 따로 넣는다
+  admin-password: admin1234

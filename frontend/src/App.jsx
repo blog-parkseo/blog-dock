@@ -9,6 +9,7 @@ import RequireLogin from './components/RequireLogin'
 import ErrorView from './components/ErrorView'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 import BlogCreatePage from './pages/BlogCreatePage'
 import BlogLayout from './pages/blog/BlogLayout'
 import BlogPostsPage from './pages/blog/BlogPostsPage'
@@ -97,6 +98,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
             <Route path="/blog/new" element={<RequireLogin><BlogCreatePage /></RequireLogin>} />
             {BLOG_DOMAIN
               ? <Route path="/blog/:address/*" element={<GoToBlogHost />} />
