@@ -163,6 +163,8 @@ legend { font-weight: 600; font-size: 14px; padding: 0 4px; color: var(--ink); }
 .subscriber-count { color: #5a544d; font-size: 14px; }
 button.subscribe { padding: 8px 18px; font-size: 14px; border-radius: 999px; }
 .cover-edit { border-radius: 999px; background: var(--surface); }
+.mutual-badge { padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 12px; font-weight: 600; }
+button.subscribe.mutual { border-color: color-mix(in srgb, var(--accent) 40%, #fff); color: var(--accent-strong); }
 button.subscribe.subscribed { background: var(--surface); }
 .author-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; margin: 0 0 28px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .author-box .author { display: flex; align-items: center; gap: 12px; min-width: 0; }

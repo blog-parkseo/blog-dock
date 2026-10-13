@@ -152,4 +152,33 @@ class SubscriptionTest {
                 .andExpect(jsonPath("$.draftCount").value(1));
         mvc.perform(get("/api/me/posts/counts").session(login("count-noblog"))).andExpect(status().isConflict());
     }
+
+    /** SUB-05 맞구독: 서로 구독하면 맞구독, 해제하면 내 구독만 취소된다. */
+    @Test
+    void mutual_subscription_four_states() throws Exception {
+        MockHttpSession a = blogOwner("mutual-a", "mutual-a");
+        MockHttpSession b = blogOwner("mutual-b", "mutual-b");
+
+        // 서로 안 함
+        mvc.perform(get("/api/blogs/mutual-b").session(a))
+                .andExpect(jsonPath("$.subscribed").value(false)).andExpect(jsonPath("$.subscribesMe").value(false));
+        // B만 A를 구독 → A가 보면 "상대만 나를 구독"
+        mvc.perform(post("/api/blogs/mutual-a/subscription").session(b)).andExpect(status().isOk());
+        mvc.perform(get("/api/blogs/mutual-b/sidebar").session(a))
+                .andExpect(jsonPath("$.blog.subscribed").value(false)).andExpect(jsonPath("$.blog.subscribesMe").value(true));
+        // A도 B를 구독 → 맞구독
+        mvc.perform(post("/api/blogs/mutual-b/subscription").session(a))
+                .andExpect(jsonPath("$.subscribed").value(true)).andExpect(jsonPath("$.subscribesMe").value(true));
+        mvc.perform(get("/api/me/subscriptions").session(a)).andExpect(jsonPath("$[0].mutual").value(true));
+        // A가 해제해도 B의 구독은 남는다
+        mvc.perform(delete("/api/blogs/mutual-b/subscription").session(a))
+                .andExpect(jsonPath("$.subscribed").value(false)).andExpect(jsonPath("$.subscribesMe").value(true));
+        mvc.perform(get("/api/blogs/mutual-a").session(b))
+                .andExpect(jsonPath("$.subscribed").value(true)).andExpect(jsonPath("$.subscribesMe").value(false));
+        mvc.perform(get("/api/me/subscriptions").session(b)).andExpect(jsonPath("$[0].mutual").value(false));
+
+        // 블로그가 없는 회원에게는 subscribesMe가 항상 거짓
+        mvc.perform(get("/api/blogs/mutual-a").session(login("mutual-noblog")))
+                .andExpect(jsonPath("$.subscribesMe").value(false));
+    }
 }

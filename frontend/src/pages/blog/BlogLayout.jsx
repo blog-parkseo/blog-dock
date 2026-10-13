@@ -33,7 +33,7 @@ export default function BlogLayout({ address: hostAddress }) {
   const { blog } = sidebar
   // 구독·해제하면 버튼과 구독자 수를 바로 바꾼다 (블로그 위쪽과 글 아래가 같이 바뀐다)
   const setSubscription = (r) =>
-    setSidebar((s) => ({ ...s, blog: { ...s.blog, subscribed: r.subscribed, subscriberCount: r.subscriberCount } }))
+    setSidebar((s) => ({ ...s, blog: { ...s.blog, subscribed: r.subscribed, subscribesMe: r.subscribesMe, subscriberCount: r.subscriberCount } }))
   return (
     <BlogContext.Provider value={{ address, blog, sidebar, reload, link, setSubscription }}>
       <section className="blog-cover" style={{ '--cover': colorOf(address) }}>

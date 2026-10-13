@@ -48,14 +48,14 @@ public class BlogService {
             throw ApiException.invalid("address", messageOf(problem));
         }
         Blog blog = blogRepository.save(Blog.open(memberId, address, req.name().trim(), blankToNull(req.description())));
-        return BlogResponse.of(blog, memberId, subscriptionService.status(blog.getId(), memberId));
+        return BlogResponse.of(blog, memberId, subscriptionService.status(blog, memberId));
     }
 
     /** BLOG-02, BLOG-03: 블로그 정보. 없으면 404. */
     @Transactional(readOnly = true)
     public BlogResponse get(String address, Long viewerId) {
         Blog blog = find(address);
-        return BlogResponse.of(blog, viewerId, subscriptionService.status(blog.getId(), viewerId));
+        return BlogResponse.of(blog, viewerId, subscriptionService.status(blog, viewerId));
     }
 
     /** BLOG-02: 주인만 이름·소개를 바꾼다. 주소는 받지 않는다. */
@@ -66,7 +66,7 @@ public class BlogService {
             throw ApiException.forbidden("내 블로그만 고칠 수 있어요");
         }
         blog.update(req.name().trim(), blankToNull(req.description()), blankToNull(req.profileImageUrl()));
-        return BlogResponse.of(blog, memberId, subscriptionService.status(blog.getId(), memberId));
+        return BlogResponse.of(blog, memberId, subscriptionService.status(blog, memberId));
     }
 
     private Blog find(String address) {

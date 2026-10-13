@@ -45,6 +45,7 @@ export default function FeedPage() {
               <SmartLink to={blogLink(b.address, '')} className="subscribed-blog">
                 <Avatar name={b.name} src={b.profileImageUrl} size={28} />
                 <span>{b.name}</span>
+                {b.mutual && <span className="mutual-badge">맞구독</span>}
               </SmartLink>
             </li>
           ))}

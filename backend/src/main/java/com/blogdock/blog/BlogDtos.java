@@ -32,14 +32,18 @@ public final class BlogDtos {
     public record AddressCheckResponse(boolean available, String reason) {
     }
 
-    /** subscriberCount: 구독자 수, subscribed: 보는 사람이 구독했는지 (SUB-01). */
+    /**
+     * subscriberCount: 구독자 수, subscribed: 보는 사람이 구독했는지 (SUB-01),
+     * subscribesMe: 블로그 주인이 보는 사람의 블로그를 구독했는지 (SUB-05, 둘 다 참이면 맞구독).
+     */
     public record BlogResponse(String address, String name, String description,
-                               String profileImageUrl, boolean isOwner, long subscriberCount, boolean subscribed) {
+                               String profileImageUrl, boolean isOwner, long subscriberCount, boolean subscribed,
+                               boolean subscribesMe) {
 
         public static BlogResponse of(Blog blog, Long viewerId, SubscriptionResponse subscription) {
             return new BlogResponse(blog.getAddress(), blog.getName(), blog.getDescription(),
                     blog.getProfileImageUrl(), viewerId != null && blog.isOwnedBy(viewerId),
-                    subscription.subscriberCount(), subscription.subscribed());
+                    subscription.subscriberCount(), subscription.subscribed(), subscription.subscribesMe());
         }
     }
 }

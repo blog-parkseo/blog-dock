@@ -47,7 +47,7 @@ public class SidebarService {
                 .map(c -> new CategoryCount(c.getId(), c.getName(), counts.getOrDefault(c.getId(), 0L)))
                 .toList();
         BlogDtos.BlogResponse info = BlogDtos.BlogResponse.of(blog, viewerId,
-                subscriptionService.status(blog.getId(), viewerId));
+                subscriptionService.status(blog, viewerId));
         return new Sidebar(info, total, categories, counts.getOrDefault(null, 0L));
     }
 
