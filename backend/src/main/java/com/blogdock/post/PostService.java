@@ -1,6 +1,7 @@
 package com.blogdock.post;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,9 @@ import com.blogdock.post.PostDtos.PostDetail;
 import com.blogdock.post.PostDtos.PostEdit;
 import com.blogdock.post.PostDtos.PostSummary;
 import com.blogdock.post.PostDtos.SavedResponse;
+import com.blogdock.post.PostDtos.ThemeFeed;
+import com.blogdock.post.PostDtos.ThemePost;
+import com.blogdock.post.PostDtos.ThemeRef;
 import com.blogdock.post.PostDtos.WriteRequest;
 import com.blogdock.reaction.PostLike;
 import com.blogdock.reaction.PostLikeRepository;
@@ -49,6 +53,7 @@ public class PostService {
 
     public static final int PAGE_SIZE = 10;
     public static final int HOME_SIZE = 10;
+    public static final int THEME_SIZE = 5;
     private static final int EXCERPT_LENGTH = 150;
     private static final Set<String> VISIBILITIES = Set.of(Post.PUBLIC, Post.SUBSCRIBERS, Post.PRIVATE);
 
@@ -126,6 +131,7 @@ public class PostService {
                     .orElseThrow(() -> ApiException.invalid("categoryId", "카테고리를 찾을 수 없어요"));
         }
         List<String> tags = tagService.normalize(req.tags());
+        String theme = Theme.check(req.theme());
 
         // POST-07: 고른 대표 이미지, 없으면 본문 첫 이미지, 그것도 없으면 대표 이미지 없음
         String thumbnail = req.thumbnailUrl() != null && !req.thumbnailUrl().isBlank()
@@ -133,7 +139,7 @@ public class PostService {
                 : imageService.thumbOf(sanitizer.firstImageSrc(content.html()));
 
         boolean firstPublish = req.publish() && !post.isPublished();
-        post.write(title, categoryId, visibility, content, thumbnail);
+        post.write(title, categoryId, visibility, theme, content, thumbnail);
         if (req.publish()) {
             post.publish();
         }
@@ -174,7 +180,7 @@ public class PostService {
         Blog blog = blogAccess.checkOwner(post.getBlogId(), memberId);
         return new PostEdit(post.getId(), post.getSlug(), post.getTitle(), post.getContentMarkdown(),
                 post.getContentHtml(), post.getCategoryId(), tagRepository.namesOfPost(post.getId()),
-                post.getVisibility(), post.getStatus(), post.getThumbnailUrl(), blog.getAddress());
+                post.getVisibility(), post.getStatus(), post.getThumbnailUrl(), blog.getAddress(), post.getTheme());
     }
 
     /**
@@ -206,13 +212,13 @@ public class PostService {
                 post.getVisibility(), post.getPublishedAt(), post.getUpdatedAt(), categoryRef(post.getCategoryId()),
                 tagRepository.namesOfPost(post.getId()), post.getThumbnailUrl(),
                 likeRepository.countByPostId(post.getId()), liked, commentRepository.countByPostId(post.getId()),
-                owner, prev, next, new BlogRef(blog.getAddress(), blog.getName()), false);
+                owner, prev, next, new BlogRef(blog.getAddress(), blog.getName()), false, ThemeRef.of(post.getTheme()));
     }
 
     private static PostDetail locked(Post post, Blog blog) {
         return new PostDetail(post.getId(), post.getSlug(), post.getTitle(), "", post.getVisibility(),
                 post.getPublishedAt(), null, null, List.of(), null, 0, false, 0, false, null, null,
-                new BlogRef(blog.getAddress(), blog.getName()), true);
+                new BlogRef(blog.getAddress(), blog.getName()), true, null);
     }
 
     /**
@@ -262,8 +268,61 @@ public class PostService {
                 (at, id) -> postRepository.findFeed(memberId, at, id, PageRequest.of(0, HOME_SIZE + 1)));
     }
 
-    /** 커서는 "마지막 글의 발행 시각_id". HOME_SIZE+1개를 읽어 다음이 있는지 안다. */
+    /** HOME-05 테마별 공개 글 수. 홈은 글이 있는 테마만 버튼으로 보여 준다. */
+    @Transactional(readOnly = true)
+    public List<ThemeRef> themes() {
+        Map<String, Long> counts = new HashMap<>();
+        for (Object[] row : postRepository.countByTheme()) {
+            counts.put((String) row[0], (Long) row[1]);
+        }
+        return Arrays.stream(Theme.values()).map(t -> ThemeRef.of(t, counts.getOrDefault(t.name(), 0L))).toList();
+    }
+
+    /** HOME-05 테마 피드. 홈과 같은 커서 방식으로 THEME_SIZE개씩. */
+    @Transactional(readOnly = true)
+    public ThemeFeed themeFeed(String code, String cursor) {
+        String theme;
+        try {
+            theme = Theme.valueOf(code).name();
+        } catch (IllegalArgumentException e) {
+            throw ApiException.notFound("테마를 찾을 수 없어요");
+        }
+        Slice slice = cursorSlice(cursor, THEME_SIZE,
+                (at, id) -> postRepository.findTheme(theme, at, id, PageRequest.of(0, THEME_SIZE + 1)));
+        List<Post> posts = slice.items();
+        if (posts.isEmpty()) {
+            return new ThemeFeed(ThemeRef.of(theme), List.of(), null);
+        }
+        Set<Long> ids = posts.stream().map(Post::getId).collect(Collectors.toSet());
+        Map<Long, Long> likes = counts(postRepository.countLikes(ids));
+        Map<Long, Long> comments = counts(postRepository.countComments(ids));
+        Map<Long, Blog> blogs = byId(blogRepository.findAllById(
+                posts.stream().map(Post::getBlogId).collect(Collectors.toSet())), Blog::getId);
+        List<ThemePost> items = posts.stream().map(p -> {
+            Blog b = blogs.get(p.getBlogId());
+            return new ThemePost(p.getId(), p.getSlug(), p.getTitle(), excerpt(p.getContentText()), p.getPublishedAt(),
+                    p.getThumbnailUrl(), new BlogRef(b.getAddress(), b.getName()), b.getProfileImageUrl(),
+                    likes.getOrDefault(p.getId(), 0L), comments.getOrDefault(p.getId(), 0L));
+        }).toList();
+        return new ThemeFeed(ThemeRef.of(theme), items, slice.next());
+    }
+
+    private static Map<Long, Long> counts(List<Object[]> rows) {
+        Map<Long, Long> map = new HashMap<>();
+        rows.forEach(r -> map.put((Long) r[0], (Long) r[1]));
+        return map;
+    }
+
     private HomeResponse cursorPage(String cursor, BiFunction<Instant, Long, List<Post>> fetch) {
+        Slice slice = cursorSlice(cursor, HOME_SIZE, fetch);
+        return new HomeResponse(summaries(slice.items()), slice.next());
+    }
+
+    private record Slice(List<Post> items, String next) {
+    }
+
+    /** 커서는 "마지막 글의 발행 시각_id". fetch는 size+1개를 읽어 다음이 있는지 안다. */
+    private static Slice cursorSlice(String cursor, int size, BiFunction<Instant, Long, List<Post>> fetch) {
         Instant at = null;
         Long id = null;
         if (cursor != null && !cursor.isBlank()) {
@@ -276,14 +335,14 @@ public class PostService {
             }
         }
         List<Post> rows = fetch.apply(at, id);
-        boolean more = rows.size() > HOME_SIZE;
-        List<Post> items = more ? rows.subList(0, HOME_SIZE) : rows;
+        boolean more = rows.size() > size;
+        List<Post> items = more ? rows.subList(0, size) : rows;
         String next = null;
         if (more) {
             Post last = items.get(items.size() - 1);
             next = last.getPublishedAt() + "_" + last.getId();
         }
-        return new HomeResponse(summaries(items), next);
+        return new Slice(items, next);
     }
 
     /** MNG-01 내 글 관리. status: PUBLIC / SUBSCRIBERS / PRIVATE / DRAFT */

@@ -21,9 +21,10 @@ export default function WritePage() {
   const editorRef = useRef(null)
   const requestKey = useRef(newRequestKey())
   const saving = useRef(false) // 화면이 다시 그려지기 전에 또 눌러도 막는다
-  const [loaded, setLoaded] = useState(postId ? null : { title: '', contentMarkdown: '', categoryId: null, tags: [], visibility: 'PUBLIC', status: 'DRAFT' })
+  const [loaded, setLoaded] = useState(postId ? null : { title: '', contentMarkdown: '', categoryId: null, tags: [], visibility: 'PUBLIC', theme: null, status: 'DRAFT' })
   const [loadError, setLoadError] = useState(null)
   const [categories, setCategories] = useState([])
+  const [themes, setThemes] = useState([])
   const [form, setForm] = useState(null)
   const [images, setImages] = useState([])
   const [thumb, setThumb] = useState('')
@@ -34,6 +35,7 @@ export default function WritePage() {
   useEffect(() => {
     if (!me?.blogAddress) return
     api('GET', `/api/blogs/${me.blogAddress}/categories`).then(setCategories)
+    api('GET', '/api/home/themes').then(setThemes).catch(() => {})
     if (postId) {
       api('GET', `/api/posts/${postId}/edit`).then(setLoaded).catch(setLoadError)
     }
@@ -41,7 +43,7 @@ export default function WritePage() {
 
   useEffect(() => {
     if (loaded) {
-      setForm({ title: loaded.title, categoryId: loaded.categoryId ?? '', tags: loaded.tags, visibility: loaded.visibility })
+      setForm({ title: loaded.title, categoryId: loaded.categoryId ?? '', tags: loaded.tags, visibility: loaded.visibility, theme: loaded.theme ?? '' })
       const imgs = loaded.contentHtml ? imagesIn(loaded.contentHtml) : []
       setImages(imgs)
       // 전에 고른 대표 이미지가 첫 이미지가 아니면 다시 골라 둔다 (썸네일 주소: 원본이름_t.확장자)
@@ -71,6 +73,7 @@ export default function WritePage() {
       categoryId: form.categoryId === '' ? null : Number(form.categoryId),
       tags: form.tags,
       visibility: form.visibility,
+      theme: form.theme || null,
       publish,
       // POST-07: 고르지 않으면 서버가 본문 첫 이미지를 대표로 쓴다
       thumbnailUrl: thumb && imagesIn(contentHtml).includes(thumb) ? thumb : null,
@@ -100,6 +103,11 @@ export default function WritePage() {
   }
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+  // HOME-05: 카테고리에 기본 테마가 있으면 테마를 채운다 (바꿔도 된다)
+  const pickCategory = (e) => {
+    const c = categories.find((x) => String(x.id) === e.target.value)
+    setForm({ ...form, categoryId: e.target.value, theme: c?.theme ?? form.theme })
+  }
 
   return (
     <div className="write panel">
@@ -111,11 +119,19 @@ export default function WritePage() {
       <div className="row">
         <div>
           <label htmlFor="category">카테고리</label>
-          <select id="category" value={form.categoryId} onChange={set('categoryId')}>
+          <select id="category" value={form.categoryId} onChange={pickCategory}>
             <option value="">미분류</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           {errors.categoryId && <div className="error">{errors.categoryId}</div>}
+        </div>
+        <div>
+          <label htmlFor="theme">테마 <small className="hint">홈의 테마 피드에 보여요</small></label>
+          <select id="theme" value={form.theme} onChange={set('theme')}>
+            <option value="">선택 안 함</option>
+            {themes.map((t) => <option key={t.code} value={t.code}>{t.label}</option>)}
+          </select>
+          {errors.theme && <div className="error">{errors.theme}</div>}
         </div>
         <fieldset>
           <legend>공개 범위</legend>

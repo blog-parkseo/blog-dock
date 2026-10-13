@@ -359,3 +359,32 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
 .notification time { font-size: 13px; color: var(--muted); }
 .notification-gone { font-size: 13px; color: #c0392b; font-weight: 600; }
 .unread-dot { flex: none; width: 8px; height: 8px; margin-top: 8px; border-radius: 999px; background: var(--accent); }
+
+/* HOME-05 테마 피드 */
+.theme-feed { margin-top: 56px; scroll-margin-top: 130px; }
+.theme-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.theme-tabs::-webkit-scrollbar { display: none; }
+.theme-tabs button { flex: none; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; font-weight: 600; color: var(--muted); }
+.theme-tabs button.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+.theme-head { padding: 28px 0 24px; border-bottom: 1px solid var(--line); }
+.theme-eyebrow { display: inline-block; margin: 0 0 8px; font-size: 15px; font-weight: 800; letter-spacing: .02em; border-bottom: 3px solid var(--ink); line-height: 1.3; }
+.theme-head h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; letter-spacing: -.02em; }
+.theme-desc { margin: 0; color: var(--muted); white-space: pre-line; font-size: 1.05rem; line-height: 1.6; }
+.theme-list { list-style: none; margin: 0; padding: 0; }
+.theme-list li { border-bottom: 1px solid var(--line); }
+.theme-item { display: flex; gap: 24px; align-items: center; padding: 24px 0; color: var(--ink); }
+.theme-item:hover h3 { text-decoration: underline; }
+.theme-text { flex: 1; min-width: 0; }
+.theme-blog { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; color: var(--muted); font-size: 15px; }
+.theme-item h3 { margin: 0 0 8px; font-size: 1.25rem; font-weight: 700; }
+.theme-excerpt { margin: 0; color: var(--muted); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.theme-meta { display: flex; gap: 14px; margin: 14px 0 0; color: var(--muted); font-size: 14px; }
+.theme-thumb { flex: none; width: 200px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 12px; }
+@media (max-width: 640px) {
+  .theme-item { gap: 14px; align-items: flex-start; }
+  .theme-thumb { width: 96px; aspect-ratio: 1; }
+  .theme-item h3 { font-size: 1.05rem; }
+}
+.post-labels { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; flex-wrap: wrap; }
+.theme-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--ink); }
+.category-theme { width: auto; padding: 4px 8px; font-size: 13px; }

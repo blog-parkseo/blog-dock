@@ -14,6 +14,7 @@ import com.blogdock.blog.Blog;
 import com.blogdock.blog.BlogAccess;
 import com.blogdock.category.CategoryDtos.CategoryResponse;
 import com.blogdock.common.ApiException;
+import com.blogdock.post.Theme;
 
 /** CAT-01 카테고리 추가·이름 변경·삭제, CAT-04 순서 변경. 주인만 한다. */
 @Service
@@ -53,6 +54,14 @@ public class CategoryService {
             checkName(c.getBlogId(), name);
             c.rename(name);
         }
+        return CategoryResponse.of(c);
+    }
+
+    /** HOME-05 카테고리 기본 테마. 이미 쓴 글의 테마는 바꾸지 않는다. */
+    @Transactional
+    public CategoryResponse changeTheme(Long categoryId, Long memberId, String theme) {
+        Category c = findOwned(categoryId, memberId);
+        c.changeTheme(Theme.check(theme));
         return CategoryResponse.of(c);
     }
 

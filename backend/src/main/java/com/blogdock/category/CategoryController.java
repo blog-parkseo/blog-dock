@@ -18,6 +18,7 @@ import com.blogdock.auth.LoginMember;
 import com.blogdock.category.CategoryDtos.CategoryResponse;
 import com.blogdock.category.CategoryDtos.NameRequest;
 import com.blogdock.category.CategoryDtos.OrderRequest;
+import com.blogdock.category.CategoryDtos.ThemeRequest;
 
 import jakarta.validation.Valid;
 
@@ -52,6 +53,12 @@ public class CategoryController {
     public CategoryResponse rename(@PathVariable Long id, @AuthenticationPrincipal LoginMember login,
                                    @Valid @RequestBody NameRequest req) {
         return categoryService.rename(id, LoginMember.require(login), req.name());
+    }
+
+    @PatchMapping("/api/categories/{id}/theme")
+    public CategoryResponse changeTheme(@PathVariable Long id, @AuthenticationPrincipal LoginMember login,
+                                        @RequestBody ThemeRequest req) {
+        return categoryService.changeTheme(id, LoginMember.require(login), req.theme());
     }
 
     @DeleteMapping("/api/categories/{id}")

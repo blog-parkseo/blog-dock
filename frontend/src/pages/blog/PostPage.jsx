@@ -52,7 +52,10 @@ export default function PostPage() {
   return (
     <article className="post">
       <header className="post-head">
-        {post.category && <SmartLink to={link(`category/${post.category.id}`)} className="eyebrow">{post.category.name}</SmartLink>}
+        {(post.theme || post.category) && <p className="post-labels">
+          {post.theme && <SmartLink to={mainLink(`/?theme=${post.theme.code}`)} className="theme-chip">{post.theme.emoji} {post.theme.label}</SmartLink>}
+          {post.category && <SmartLink to={link(`category/${post.category.id}`)} className="eyebrow">{post.category.name}</SmartLink>}
+        </p>}
         <h1>{post.title}</h1>
         <p className="meta">
           <Avatar name={post.blog.name} size={26} />

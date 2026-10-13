@@ -22,6 +22,7 @@ public final class PostDtos {
             Long categoryId,
             List<String> tags,
             String visibility,
+            String theme,
             boolean publish,
             String thumbnailUrl) {
     }
@@ -60,16 +61,40 @@ public final class PostDtos {
     /**
      * POST-04 글 상세. locked=true면 구독자 공개 글을 구독하지 않은 사람이 연 것이라
      * 제목·블로그·발행일만 채우고 본문·태그·이웃 글은 비운다 (POST-12).
+     * theme: HOME-05 테마 (없으면 null).
      */
     public record PostDetail(Long id, String slug, String title, String contentHtml, String visibility,
                              Instant publishedAt, Instant updatedAt, CategoryRef category, List<String> tags,
                              String thumbnailUrl, long likeCount, boolean liked, long commentCount,
-                             boolean isOwner, Neighbor prev, Neighbor next, BlogRef blog, boolean locked) {
+                             boolean isOwner, Neighbor prev, Neighbor next, BlogRef blog, boolean locked,
+                             ThemeRef theme) {
+    }
+
+    /** HOME-05 테마 하나. count는 홈 테마 목록에서만 채운다 (그 테마의 공개 글 수). */
+    public record ThemeRef(String code, String label, String emoji, String title, String description, long count) {
+
+        public static ThemeRef of(Theme t, long count) {
+            return new ThemeRef(t.name(), t.label(), t.emoji(), t.title(), t.description(), count);
+        }
+
+        public static ThemeRef of(String code) {
+            return code == null ? null : of(Theme.valueOf(code), 0);
+        }
+    }
+
+    /** HOME-05 테마 피드: 테마 소개와 글 목록. */
+    public record ThemeFeed(ThemeRef theme, List<ThemePost> items, String nextCursor) {
+    }
+
+    /** HOME-05 테마 피드 한 줄: 블로그 사진·이름, 제목, 요약, 대표 사진, 공감·댓글 수. */
+    public record ThemePost(Long id, String slug, String title, String excerpt, Instant publishedAt,
+                            String thumbnailUrl, BlogRef blog, String blogImageUrl, long likeCount,
+                            long commentCount) {
     }
 
     /** 수정 화면에 채울 값 (주인만). */
     public record PostEdit(Long id, String slug, String title, String contentMarkdown, String contentHtml,
                            Long categoryId, List<String> tags, String visibility, String status,
-                           String thumbnailUrl, String blogAddress) {
+                           String thumbnailUrl, String blogAddress, String theme) {
     }
 }

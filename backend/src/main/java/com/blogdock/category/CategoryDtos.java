@@ -19,10 +19,14 @@ public final class CategoryDtos {
     public record OrderRequest(@NotNull(message = "순서를 보내 주세요") List<Long> ids) {
     }
 
-    public record CategoryResponse(Long id, String name, int sortOrder) {
+    /** theme: 테마 코드, 비우면 기본 테마 없음. */
+    public record ThemeRequest(String theme) {
+    }
+
+    public record CategoryResponse(Long id, String name, int sortOrder, String theme) {
 
         public static CategoryResponse of(Category c) {
-            return new CategoryResponse(c.getId(), c.getName(), c.getSortOrder());
+            return new CategoryResponse(c.getId(), c.getName(), c.getSortOrder(), c.getTheme());
         }
     }
 }

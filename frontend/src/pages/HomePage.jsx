@@ -5,6 +5,7 @@ import { blogLink, mainLink } from '../blogUrl'
 import Avatar from '../components/Avatar'
 import PostList from '../components/PostList'
 import SmartLink from '../components/SmartLink'
+import ThemeFeed from '../components/ThemeFeed'
 
 // HOME-01 홈 최신 글: 모든 블로그의 공개 글. 더보기로 이어 불러온다 (커서라 중복·누락이 없다)
 export default function HomePage() {
@@ -79,6 +80,7 @@ export default function HomePage() {
       {error && <div className="error">{error}</div>}
       {items && <PostList items={items} showBlog layout="grid" empty="아직 올라온 글이 없어요. 첫 글의 주인공이 되어 보세요." />}
       {cursor && <p className="center"><button onClick={() => load(cursor)} disabled={busy}>{busy ? '불러오는 중…' : '더보기'}</button></p>}
+      <ThemeFeed />
     </div>
   )
 }

@@ -107,8 +107,10 @@ function CategoryManager({ address }) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
 
+  const [themes, setThemes] = useState([])
   const load = useCallback(() => { api('GET', `/api/blogs/${address}/categories`).then(setItems) }, [address])
   useEffect(() => { load() }, [load])
+  useEffect(() => { api('GET', '/api/home/themes').then(setThemes).catch(() => {}) }, [])
   if (!items) return null
 
   const run = async (fn) => {
@@ -143,6 +145,12 @@ function CategoryManager({ address }) {
           <li key={c.id}>
             <strong>{c.name}</strong>
             <p className="actions">
+              {/* HOME-05: 이 카테고리로 글을 쓰면 테마가 미리 골라진다 */}
+              <select className="category-theme" aria-label={`${c.name} 기본 테마`} value={c.theme ?? ''}
+                onChange={(e) => run(() => api('PATCH', `/api/categories/${c.id}/theme`, { theme: e.target.value || null }))}>
+                <option value="">기본 테마 없음</option>
+                {themes.map((t) => <option key={t.code} value={t.code}>테마: {t.label}</option>)}
+              </select>
               <button className="link" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`${c.name} 위로`}>▲</button>
               <button className="link" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label={`${c.name} 아래로`}>▼</button>
               <button className="link" onClick={() => rename(c)}>이름 변경</button>

@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.blogdock.auth.LoginMember;
 import com.blogdock.common.Idempotency;
+import com.blogdock.post.PostDtos.ThemeFeed;
+import com.blogdock.post.PostDtos.ThemeRef;
 import com.blogdock.post.PostDtos.HomeResponse;
 import com.blogdock.post.PostDtos.PageResponse;
 import com.blogdock.post.PostDtos.PostDetail;
@@ -64,6 +66,18 @@ public class PostController {
     @GetMapping("/api/home/popular")
     public List<PostSummary> popular() {
         return popularPostService.popular();
+    }
+
+    /** HOME-05 테마 목록과 테마별 공개 글 수. */
+    @GetMapping("/api/home/themes")
+    public List<ThemeRef> themes() {
+        return postService.themes();
+    }
+
+    /** HOME-05 테마 피드 (5개씩, 커서로 더보기). */
+    @GetMapping("/api/home/themes/{code}/posts")
+    public ThemeFeed themeFeed(@PathVariable String code, @RequestParam(required = false) String cursor) {
+        return postService.themeFeed(code, cursor);
     }
 
     @GetMapping("/api/home/posts")

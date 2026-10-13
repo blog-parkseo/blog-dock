@@ -48,6 +48,30 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             order by p.publishedAt desc, p.id desc""")
     List<Post> findHome(Instant cursorAt, Long cursorId, Pageable pageable);
 
+    /** HOME-05 테마 피드: 그 테마의 공개 글. 홈과 같은 커서 방식. */
+    @Query("""
+            select p from Post p
+            where p.theme = :theme and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
+              and (:cursorAt is null or p.publishedAt < :cursorAt
+                   or (p.publishedAt = :cursorAt and p.id < :cursorId))
+            order by p.publishedAt desc, p.id desc""")
+    List<Post> findTheme(String theme, Instant cursorAt, Long cursorId, Pageable pageable);
+
+    /** HOME-05 테마별 공개 글 수 [테마, 개수]. */
+    @Query("""
+            select p.theme, count(p) from Post p
+            where p.theme is not null and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
+            group by p.theme""")
+    List<Object[]> countByTheme();
+
+    /** 글 여러 개의 공감 수 [글 id, 개수]. */
+    @Query("select l.postId, count(l) from PostLike l where l.postId in :postIds group by l.postId")
+    List<Object[]> countLikes(Collection<Long> postIds);
+
+    /** 글 여러 개의 댓글 수 [글 id, 개수]. */
+    @Query("select c.postId, count(c) from Comment c where c.postId in :postIds group by c.postId")
+    List<Object[]> countComments(Collection<Long> postIds);
+
     /** SUB-03 구독 피드: 내가 구독한 블로그의 공개 글과 구독자 공개 글. 홈과 같은 커서 방식. */
     @Query("""
             select p from Post p

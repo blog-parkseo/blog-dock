@@ -56,6 +56,9 @@ public class Post {
     @Column(nullable = false)
     private String status;
 
+    /** HOME-05 테마 코드 (없으면 null). */
+    private String theme;
+
     /** 처음 발행한 시각. 목록 순서의 기준이고 수정해도 바뀌지 않는다. */
     @Column(name = "published_at")
     private Instant publishedAt;
@@ -83,7 +86,9 @@ public class Post {
         return p;
     }
 
-    public void write(String title, Long categoryId, String visibility, PostContent content, String thumbnailUrl) {
+    public void write(String title, Long categoryId, String visibility, String theme, PostContent content,
+                      String thumbnailUrl) {
+        this.theme = theme;
         this.title = title;
         this.categoryId = categoryId;
         this.visibility = visibility;
@@ -158,6 +163,10 @@ public class Post {
 
     public String getVisibility() {
         return visibility;
+    }
+
+    public String getTheme() {
+        return theme;
     }
 
     public String getStatus() {

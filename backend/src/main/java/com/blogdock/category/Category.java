@@ -26,6 +26,9 @@ public class Category {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    /** HOME-05 이 카테고리로 글을 쓸 때 미리 골라 둘 테마 (없으면 null). */
+    private String theme;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -47,6 +50,14 @@ public class Category {
 
     public void moveTo(int sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public void changeTheme(String theme) {
+        this.theme = theme;
+    }
+
+    public String getTheme() {
+        return theme;
     }
 
     public Long getId() {
