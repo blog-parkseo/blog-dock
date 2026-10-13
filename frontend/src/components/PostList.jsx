@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { blogLink } from '../blogUrl'
 import { formatDate } from '../format'
@@ -14,9 +15,7 @@ export default function PostList({ items, showBlog = false, layout = 'rows', emp
         {items.map((p) => (
           <li key={p.id}>
             <SmartLink to={blogLink(p.blog.address, p.slug)} className="post-card">
-              <div className="post-card-cover" style={p.thumbnailUrl ? undefined : { '--cover': colorOf(p.blog.address) }}>
-                {p.thumbnailUrl ? <img src={p.thumbnailUrl} alt="" loading="lazy" /> : <span>{[...p.title][0]}</span>}
-              </div>
+              <CardCover post={p} />
               <div className="post-card-body">
                 {p.category && <span className="eyebrow">{p.category.name}</span>}
                 <h3>{p.title}</h3>
@@ -79,5 +78,18 @@ export function Pager({ page, totalPages, toPage }) {
       <span className="pager-count">{page + 1} / {totalPages}</span>
       {page + 1 < totalPages ? <Link className="button" to={toPage(page + 1)}>다음 →</Link> : <span />}
     </nav>
+  )
+}
+
+// 카드 위쪽 사진. 칸을 꽉 채우고(넘치는 부분은 잘라 냄), 사진을 못 불러오면 제목 첫 글자로 대신한다
+function CardCover({ post }) {
+  const [failed, setFailed] = useState(false)
+  const showImage = post.thumbnailUrl && !failed
+  return (
+    <div className="post-card-cover" style={showImage ? undefined : { '--cover': colorOf(post.blog.address) }}>
+      {showImage
+        ? <img src={post.thumbnailUrl} alt="" loading="lazy" onError={() => setFailed(true)} />
+        : <span>{[...post.title][0]}</span>}
+    </div>
   )
 }
