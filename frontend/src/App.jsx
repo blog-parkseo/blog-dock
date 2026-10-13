@@ -6,6 +6,7 @@ import SmartLink from './components/SmartLink'
 import Avatar from './components/Avatar'
 import Logo from './components/Logo'
 import RequireLogin from './components/RequireLogin'
+import NotificationBell from './components/NotificationBell'
 import ErrorView from './components/ErrorView'
 import HomePage from './pages/HomePage'
 import FeedPage from './pages/FeedPage'
@@ -20,6 +21,7 @@ import BlogEditPage from './pages/BlogEditPage'
 import ManagePage from './pages/ManagePage'
 import SettingsPage from './pages/SettingsPage'
 import AdminPage from './pages/AdminPage'
+import NotificationsPage from './pages/NotificationsPage'
 
 // 에디터가 커서 글쓰기 화면에 들어갈 때만 불러온다
 const WritePage = lazy(() => import('./pages/WritePage'))
@@ -41,6 +43,7 @@ function Header() {
         <span className="spacer" />
         {me ? (
           <nav className="header-nav">
+            <NotificationBell />
             <SmartLink to={mainLink('/feed')} className="nav-link">구독 피드</SmartLink>
             {me.blogAddress && <SmartLink to={mainLink(`/blog/${me.blogAddress}`)} className="nav-link">내 블로그</SmartLink>}
             {me.blogAddress && <SmartLink to={mainLink('/manage')} className="nav-link">관리</SmartLink>}
@@ -107,6 +110,7 @@ export default function App() {
               : <Route path="/blog/:address" element={<BlogLayout />}>{blogChildren}</Route>}
             <Route path="/write" element={<RequireLogin><WritePage /></RequireLogin>} />
             <Route path="/write/:postId" element={<RequireLogin><WritePage /></RequireLogin>} />
+            <Route path="/notifications" element={<RequireLogin><NotificationsPage /></RequireLogin>} />
             <Route path="/feed" element={<RequireLogin><FeedPage /></RequireLogin>} />
             <Route path="/manage" element={<RequireLogin><ManagePage /></RequireLogin>} />
             <Route path="/settings" element={<RequireLogin><SettingsPage /></RequireLogin>} />

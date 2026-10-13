@@ -3,11 +3,13 @@ package com.blogdock.comment;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.blogdock.blog.BlogAccess;
 import com.blogdock.common.ApiException;
+import com.blogdock.notification.NotificationEvents.CommentWritten;
 import com.blogdock.post.Post;
 import com.blogdock.post.PostService;
 
@@ -18,11 +20,14 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostService postService;
     private final BlogAccess blogAccess;
+    private final ApplicationEventPublisher events;
 
-    public CommentService(CommentRepository commentRepository, PostService postService, BlogAccess blogAccess) {
+    public CommentService(CommentRepository commentRepository, PostService postService, BlogAccess blogAccess,
+                          ApplicationEventPublisher events) {
         this.commentRepository = commentRepository;
         this.postService = postService;
         this.blogAccess = blogAccess;
+        this.events = events;
     }
 
     /** 작성순. 볼 수 없는 글이면 404. */
@@ -42,6 +47,7 @@ public class CommentService {
     public CommentResponse write(Long postId, Long memberId, String content) {
         postService.findViewable(postId, memberId);
         Comment c = commentRepository.save(Comment.write(postId, memberId, content.strip()));
+        events.publishEvent(new CommentWritten(postId, memberId));
         return new CommentResponse(c.getId(), c.getContent(), null, null, c.getCreatedAt(), c.getUpdatedAt(),
                 true, true);
     }

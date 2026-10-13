@@ -1,11 +1,13 @@
 package com.blogdock.reaction;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.blogdock.blog.BlogAccess;
 import com.blogdock.common.ApiException;
+import com.blogdock.notification.NotificationEvents.PostLiked;
 import com.blogdock.post.Post;
 import com.blogdock.post.PostService;
 
@@ -16,11 +18,14 @@ public class LikeService {
     private final PostLikeRepository likeRepository;
     private final PostService postService;
     private final BlogAccess blogAccess;
+    private final ApplicationEventPublisher events;
 
-    public LikeService(PostLikeRepository likeRepository, PostService postService, BlogAccess blogAccess) {
+    public LikeService(PostLikeRepository likeRepository, PostService postService, BlogAccess blogAccess,
+                       ApplicationEventPublisher events) {
         this.likeRepository = likeRepository;
         this.postService = postService;
         this.blogAccess = blogAccess;
+        this.events = events;
     }
 
     @Transactional
@@ -33,6 +38,7 @@ public class LikeService {
         if (!likeRepository.existsById(key)) {
             try {
                 likeRepository.saveAndFlush(new PostLike(memberId, postId));
+                events.publishEvent(new PostLiked(postId, memberId));
             } catch (DataIntegrityViolationException e) {
                 // 동시에 두 번 눌렀다: 이미 하나 있으니 괜찮다
             }

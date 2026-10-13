@@ -12,6 +12,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import com.blogdock.category.CategoryRepository;
 import com.blogdock.comment.CommentRepository;
 import com.blogdock.common.ApiException;
 import com.blogdock.image.ImageService;
+import com.blogdock.notification.NotificationEvents.PostPublished;
 import com.blogdock.post.PostDtos.BlogRef;
 import com.blogdock.post.PostDtos.CategoryRef;
 import com.blogdock.post.PostDtos.HomeResponse;
@@ -60,11 +62,12 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final HtmlSanitizer sanitizer;
     private final ImageService imageService;
+    private final ApplicationEventPublisher events;
 
     public PostService(PostRepository postRepository, BlogRepository blogRepository, BlogAccess blogAccess,
                        CategoryRepository categoryRepository, TagService tagService, TagRepository tagRepository,
                        PostLikeRepository likeRepository, CommentRepository commentRepository,
-                       HtmlSanitizer sanitizer, ImageService imageService) {
+                       HtmlSanitizer sanitizer, ImageService imageService, ApplicationEventPublisher events) {
         this.postRepository = postRepository;
         this.blogRepository = blogRepository;
         this.blogAccess = blogAccess;
@@ -75,6 +78,7 @@ public class PostService {
         this.commentRepository = commentRepository;
         this.sanitizer = sanitizer;
         this.imageService = imageService;
+        this.events = events;
     }
 
     // ---------- 쓰기 ----------
@@ -128,9 +132,14 @@ public class PostService {
                 ? imageService.findMine(req.thumbnailUrl(), memberId).thumbUrl()
                 : imageService.thumbOf(sanitizer.firstImageSrc(content.html()));
 
+        boolean firstPublish = req.publish() && !post.isPublished();
         post.write(title, categoryId, visibility, content, thumbnail);
         if (req.publish()) {
             post.publish();
+        }
+        // NOTI-01 새 글 알림은 처음 발행할 때 한 번만. 비공개 글은 보내지 않는다
+        if (firstPublish && !Post.PRIVATE.equals(visibility)) {
+            events.publishEvent(new PostPublished(post.getId()));
         }
         tagService.replace(blog.getId(), post.getId(), tags);
         imageService.attachImages(memberId, post.getId(), content.html());

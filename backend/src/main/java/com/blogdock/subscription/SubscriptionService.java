@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +12,7 @@ import com.blogdock.blog.Blog;
 import com.blogdock.blog.BlogAccess;
 import com.blogdock.blog.BlogRepository;
 import com.blogdock.common.ApiException;
+import com.blogdock.notification.NotificationEvents.BlogSubscribed;
 
 /** SUB-01 구독·해제. 누르면 구독, 다시 누르면 해제. 구독자 수는 저장하지 않고 매번 센다. */
 @Service
@@ -19,12 +21,14 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final BlogAccess blogAccess;
     private final BlogRepository blogRepository;
+    private final ApplicationEventPublisher events;
 
     public SubscriptionService(SubscriptionRepository subscriptionRepository, BlogAccess blogAccess,
-                               BlogRepository blogRepository) {
+                               BlogRepository blogRepository, ApplicationEventPublisher events) {
         this.subscriptionRepository = subscriptionRepository;
         this.blogAccess = blogAccess;
         this.blogRepository = blogRepository;
+        this.events = events;
     }
 
     @Transactional
@@ -37,6 +41,7 @@ public class SubscriptionService {
         if (!subscriptionRepository.existsById(key)) {
             try {
                 subscriptionRepository.saveAndFlush(new Subscription(memberId, blog.getId()));
+                events.publishEvent(new BlogSubscribed(blog.getId(), memberId));
             } catch (DataIntegrityViolationException e) {
                 // 동시에 두 번 눌렀다: 이미 하나 있으니 괜찮다
             }
