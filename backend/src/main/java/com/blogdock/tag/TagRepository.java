@@ -21,10 +21,11 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
             select t.name, count(p) from Tag t
               join PostTag pt on pt.tagId = t.id
               join Post p on p.id = pt.postId
-            where t.blogId = :blogId and p.status = 'PUBLISHED' and (:owner = true or p.visibility = 'PUBLIC')
+            where t.blogId = :blogId and p.status = 'PUBLISHED' and (:owner = true or p.visibility = 'PUBLIC'
+                   or (:subscriber = true and p.visibility = 'SUBSCRIBERS'))
             group by t.name
             order by t.name""")
-    List<Object[]> countsOfBlog(Long blogId, boolean owner);
+    List<Object[]> countsOfBlog(Long blogId, boolean owner, boolean subscriber);
 
     @Modifying
     @Query("delete from PostTag pt where pt.postId = :postId")

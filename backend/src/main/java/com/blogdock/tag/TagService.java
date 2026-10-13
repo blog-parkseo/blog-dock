@@ -65,7 +65,8 @@ public class TagService {
     @Transactional(readOnly = true)
     public List<TagCount> counts(String address, Long viewerId) {
         Blog blog = blogAccess.find(address);
-        return tagRepository.countsOfBlog(blog.getId(), blog.isOwnedBy(viewerId)).stream()
+        return tagRepository.countsOfBlog(blog.getId(), blog.isOwnedBy(viewerId),
+                blogAccess.isSubscriber(blog, viewerId)).stream()
                 .map(row -> new TagCount((String) row[0], (Long) row[1]))
                 .toList();
     }

@@ -48,7 +48,7 @@ public class PostService {
     public static final int PAGE_SIZE = 10;
     public static final int HOME_SIZE = 10;
     private static final int EXCERPT_LENGTH = 150;
-    private static final Set<String> VISIBILITIES = Set.of(Post.PUBLIC, Post.PRIVATE);
+    private static final Set<String> VISIBILITIES = Set.of(Post.PUBLIC, Post.SUBSCRIBERS, Post.PRIVATE);
 
     private final PostRepository postRepository;
     private final BlogRepository blogRepository;
@@ -168,27 +168,42 @@ public class PostService {
                 post.getVisibility(), post.getStatus(), post.getThumbnailUrl(), blog.getAddress());
     }
 
-    /** POST-04: 존재 → 소속 블로그 → 주인 여부 → 공개 범위 순서로 판단하고, 볼 수 없으면 404. */
+    /**
+     * POST-04: 존재 → 소속 블로그 → 주인 여부 → 공개 범위 순서로 판단하고, 볼 수 없으면 404.
+     * POST-12: 발행된 구독자 공개 글은 404 대신 잠긴 화면(제목만)을 돌려준다.
+     */
     @Transactional(readOnly = true)
     public PostDetail detail(String address, String slug, Long viewerId) {
         Blog blog = blogAccess.find(address);
         Post post = postRepository.findByBlogIdAndSlug(blog.getId(), slug)
                 .orElseThrow(PostService::postNotFound);
         boolean owner = blog.isOwnedBy(viewerId);
-        if (!canView(post, owner)) {
+        boolean subscriber = blogAccess.isSubscriber(blog, viewerId);
+        if (!canView(post, owner, subscriber)) {
+            if (post.isPublished() && post.isSubscribersOnly()) {
+                return locked(post, blog);
+            }
             throw postNotFound();
         }
         PageRequest one = PageRequest.of(0, 1);
-        Neighbor prev = postRepository.findOlder(blog.getId(), owner, post.getPublishedAt(), post.getId(), one)
+        Neighbor prev = postRepository.findOlder(blog.getId(), owner, subscriber, post.getPublishedAt(),
+                        post.getId(), one)
                 .stream().findFirst().map(PostService::neighbor).orElse(null);
-        Neighbor next = postRepository.findNewer(blog.getId(), owner, post.getPublishedAt(), post.getId(), one)
+        Neighbor next = postRepository.findNewer(blog.getId(), owner, subscriber, post.getPublishedAt(),
+                        post.getId(), one)
                 .stream().findFirst().map(PostService::neighbor).orElse(null);
         boolean liked = viewerId != null && likeRepository.existsById(new PostLike.Key(viewerId, post.getId()));
         return new PostDetail(post.getId(), post.getSlug(), post.getTitle(), post.getContentHtml(),
                 post.getVisibility(), post.getPublishedAt(), post.getUpdatedAt(), categoryRef(post.getCategoryId()),
                 tagRepository.namesOfPost(post.getId()), post.getThumbnailUrl(),
                 likeRepository.countByPostId(post.getId()), liked, commentRepository.countByPostId(post.getId()),
-                owner, prev, next, new BlogRef(blog.getAddress(), blog.getName()));
+                owner, prev, next, new BlogRef(blog.getAddress(), blog.getName()), false);
+    }
+
+    private static PostDetail locked(Post post, Blog blog) {
+        return new PostDetail(post.getId(), post.getSlug(), post.getTitle(), "", post.getVisibility(),
+                post.getPublishedAt(), null, null, List.of(), null, 0, false, 0, false, null, null,
+                new BlogRef(blog.getAddress(), blog.getName()), true);
     }
 
     /**
@@ -200,6 +215,7 @@ public class PostService {
                                           String tag, String q) {
         Blog blog = blogAccess.find(address);
         boolean owner = blog.isOwnedBy(viewerId);
+        boolean subscriber = blogAccess.isSubscriber(blog, viewerId);
         Long categoryId = null;
         boolean uncategorized = false;
         if ("none".equals(category)) {
@@ -219,7 +235,7 @@ public class PostService {
             pattern = "%" + escapeLike(keyword.toLowerCase(Locale.ROOT)) + "%";
         }
         String tagName = tag == null || tag.isBlank() ? null : tag.trim();
-        Page<Post> result = postRepository.findBlogPosts(blog.getId(), owner, categoryId, uncategorized,
+        Page<Post> result = postRepository.findBlogPosts(blog.getId(), owner, subscriber, categoryId, uncategorized,
                 tagName, pattern, PageRequest.of(Math.max(page, 0), PAGE_SIZE));
         return page(result);
     }
@@ -261,7 +277,7 @@ public class PostService {
         return new HomeResponse(summaries(items), next);
     }
 
-    /** MNG-01 내 글 관리. status: PUBLIC / PRIVATE / DRAFT */
+    /** MNG-01 내 글 관리. status: PUBLIC / SUBSCRIBERS / PRIVATE / DRAFT */
     @Transactional(readOnly = true)
     public PageResponse<PostSummary> mine(Long memberId, String status, int page) {
         Blog blog = blogRepository.findByOwnerId(memberId)
@@ -270,9 +286,9 @@ public class PostService {
         Page<Post> result = switch (status == null ? Post.PUBLIC : status) {
             case Post.DRAFT -> postRepository.findByBlogIdAndStatusOrderByUpdatedAtDescIdDesc(
                     blog.getId(), Post.DRAFT, pageable);
-            case Post.PUBLIC, Post.PRIVATE -> postRepository.findByBlogIdAndStatusAndVisibilityOrderByPublishedAtDescIdDesc(
+            case Post.PUBLIC, Post.SUBSCRIBERS, Post.PRIVATE -> postRepository.findByBlogIdAndStatusAndVisibilityOrderByPublishedAtDescIdDesc(
                     blog.getId(), Post.PUBLISHED, status, pageable);
-            default -> throw ApiException.invalid("status", "PUBLIC, PRIVATE, DRAFT 중 하나를 골라 주세요");
+            default -> throw ApiException.invalid("status", "PUBLIC, SUBSCRIBERS, PRIVATE, DRAFT 중 하나를 골라 주세요");
         };
         return page(result);
     }
@@ -282,26 +298,28 @@ public class PostService {
     public MyPostCounts myCounts(Long memberId) {
         Blog blog = blogRepository.findByOwnerId(memberId)
                 .orElseThrow(() -> ApiException.conflict("BLOG_REQUIRED", "블로그를 먼저 만들어 주세요"));
-        long published = 0, privates = 0, drafts = 0;
+        long published = 0, subscribers = 0, privates = 0, drafts = 0;
         for (Object[] row : postRepository.countByStatus(blog.getId())) {
             long n = (Long) row[2];
             if (Post.DRAFT.equals(row[0])) {
                 drafts += n;
             } else if (Post.PRIVATE.equals(row[1])) {
                 privates += n;
+            } else if (Post.SUBSCRIBERS.equals(row[1])) {
+                subscribers += n;
             } else {
                 published += n;
             }
         }
-        return new MyPostCounts(published, privates, drafts);
+        return new MyPostCounts(published, subscribers, privates, drafts);
     }
 
-    /** 글을 볼 수 있는지 한 곳에서 판단한다 (공통 정책 2). 임시저장 글은 주인만. */
-    public static boolean canView(Post post, boolean owner) {
+    /** 글을 볼 수 있는지 한 곳에서 판단한다 (공통 정책 2, POST-12). 임시저장 글은 주인만. */
+    public static boolean canView(Post post, boolean owner, boolean subscriber) {
         if (owner) {
             return true;
         }
-        return post.isPublished() && post.isPublic();
+        return post.isPublished() && (post.isPublic() || subscriber && post.isSubscribersOnly());
     }
 
     /** 댓글·공감처럼 글에 딸린 기능이 쓰는 확인. 볼 수 없으면 404. */
@@ -309,7 +327,8 @@ public class PostService {
     public Post findViewable(Long postId, Long viewerId) {
         Post post = findPost(postId);
         Blog blog = blogAccess.find(post.getBlogId());
-        if (!post.isPublished() || !canView(post, blog.isOwnedBy(viewerId))) {
+        if (!post.isPublished()
+                || !canView(post, blog.isOwnedBy(viewerId), blogAccess.isSubscriber(blog, viewerId))) {
             throw postNotFound();
         }
         return post;

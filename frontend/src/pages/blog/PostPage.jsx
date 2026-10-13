@@ -8,6 +8,7 @@ import ErrorView from '../../components/ErrorView'
 import SmartLink from '../../components/SmartLink'
 import Avatar from '../../components/Avatar'
 import SubscribeButton from '../../components/SubscribeButton'
+import { VisibilityBadge } from '../../components/PostList'
 import { useBlog } from './BlogLayout'
 
 // POST-04 글 상세
@@ -19,14 +20,23 @@ export default function PostPage() {
   const [post, setPost] = useState(null)
   const [error, setError] = useState(null)
 
+  const load = useCallback(() => {
+    api('GET', `/api/blogs/${address}/posts/${slug}`).then(setPost).catch(setError)
+  }, [address, slug])
+
   useEffect(() => {
     setPost(null)
     setError(null)
-    api('GET', `/api/blogs/${address}/posts/${slug}`).then(setPost).catch(setError)
-  }, [address, slug, me?.id])
+    load()
+  }, [load, me?.id])
 
   if (error) return <ErrorView status={error.status} message={error.status === 404 ? '글을 찾을 수 없어요.' : undefined} />
   if (!post) return null
+  if (post.locked) {
+    // POST-12: 구독하면 바로 본문을 다시 불러온다
+    return <LockedPost post={post} blog={blog} address={address}
+      onSubscribe={(s) => { setSubscription(s); if (s.subscribed) load() }} />
+  }
 
   const remove = async () => {
     if (!window.confirm('이 글을 지울까요? 댓글과 공감도 함께 지워져요.')) return
@@ -48,7 +58,7 @@ export default function PostPage() {
           <Avatar name={post.blog.name} size={26} />
           <span>{post.blog.name}</span><span className="dot">·</span>
           <time>{formatDate(post.publishedAt)}</time>
-          {post.visibility === 'PRIVATE' && <span className="badge">비공개</span>}
+          <VisibilityBadge visibility={post.visibility} />
         </p>
         {/* 수정·삭제는 주인에게만 보인다 */}
         {post.isOwner && (
@@ -85,6 +95,29 @@ export default function PostPage() {
         {post.next ? <SmartLink to={link(post.next.slug)} className="neighbor next"><small>다음 글 →</small><span>{post.next.title}</span></SmartLink> : <span />}
       </nav>
       <Comments postId={post.id} onCount={(n) => setPost((p) => ({ ...p, commentCount: n }))} count={post.commentCount} />
+    </article>
+  )
+}
+
+// POST-12 구독하지 않은 사람이 구독자 공개 글을 열었을 때. 제목과 블로그 이름만 보여 준다
+function LockedPost({ post, blog, address, onSubscribe }) {
+  return (
+    <article className="post">
+      <header className="post-head">
+        <h1>{post.title}</h1>
+        <p className="meta">
+          <Avatar name={post.blog.name} size={26} />
+          <span>{post.blog.name}</span><span className="dot">·</span>
+          <time>{formatDate(post.publishedAt)}</time>
+          <VisibilityBadge visibility={post.visibility} />
+        </p>
+      </header>
+      <section className="locked">
+        <p className="locked-icon" aria-hidden="true">🔒</p>
+        <p><strong>구독자만 볼 수 있는 글이에요</strong></p>
+        <p className="meta">'{blog.name}'을 구독하면 바로 읽을 수 있어요.</p>
+        <SubscribeButton blog={blog} address={address} onChange={onSubscribe} />
+      </section>
     </article>
   )
 }

@@ -23,6 +23,7 @@ export default function PostList({ items, showBlog = false, layout = 'rows', emp
                 <p className="byline">
                   {showBlog && <><Avatar name={p.blog.name} size={22} /><span className="blog-name">{p.blog.name}</span><span className="dot">·</span></>}
                   <time>{formatDate(p.publishedAt)}</time>
+                  <VisibilityBadge visibility={p.visibility} />
                 </p>
               </div>
             </SmartLink>
@@ -43,7 +44,7 @@ export default function PostList({ items, showBlog = false, layout = 'rows', emp
               <p className="meta">
                 {showBlog && <span>{p.blog.name} · </span>}
                 <time>{formatDate(p.publishedAt)}</time>
-                {p.visibility === 'PRIVATE' && <span className="badge">비공개</span>}
+                <VisibilityBadge visibility={p.visibility} />
               </p>
             </div>
             {p.thumbnailUrl && <img className="thumb" src={p.thumbnailUrl} alt="" loading="lazy" />}
@@ -52,6 +53,13 @@ export default function PostList({ items, showBlog = false, layout = 'rows', emp
       ))}
     </ul>
   )
+}
+
+// 공개 글에는 표시가 없다. POST-12 구독자 공개 글은 섞여 있어도 알아보게 자물쇠를 붙인다
+export function VisibilityBadge({ visibility }) {
+  if (visibility === 'PRIVATE') return <span className="badge">비공개</span>
+  if (visibility === 'SUBSCRIBERS') return <span className="badge subscribers">🔒 구독자 전용</span>
+  return null
 }
 
 export function EmptyState({ text, children }) {

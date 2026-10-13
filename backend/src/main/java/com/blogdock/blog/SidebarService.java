@@ -38,7 +38,8 @@ public class SidebarService {
         boolean owner = blog.isOwnedBy(viewerId);
         Map<Long, Long> counts = new HashMap<>();
         long total = 0;
-        for (Object[] row : postRepository.countByCategory(blog.getId(), owner)) {
+        for (Object[] row : postRepository.countByCategory(blog.getId(), owner,
+                blogAccess.isSubscriber(blog, viewerId))) {
             long n = (Long) row[1];
             counts.put((Long) row[0], n);
             total += n;

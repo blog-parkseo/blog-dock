@@ -330,3 +330,10 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
   .row { grid-template-columns: minmax(0, 1fr); }
   h1 { font-size: 1.45rem; }
 }
+
+/* POST-12 구독자 공개 글 */
+.badge.subscribers { background: color-mix(in srgb, var(--accent) 16%, #fff); color: color-mix(in srgb, var(--accent) 75%, #000); }
+.locked { margin: 28px 0 8px; padding: 40px 20px; text-align: center; background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); }
+.locked p { margin: 6px 0; }
+.locked .locked-icon { font-size: 2.2rem; margin: 0 0 4px; }
+.locked .subscribe { margin-top: 14px; }

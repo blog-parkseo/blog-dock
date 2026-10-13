@@ -10,9 +10,17 @@ import { Pager } from '../components/PostList'
 // count: 탭 옆에 보여 줄 글 수의 이름 (/api/me/posts/counts)
 const TABS = [
   { key: 'PUBLIC', label: '공개', count: 'publicCount' },
+  { key: 'SUBSCRIBERS', label: '구독자 공개', count: 'subscribersCount' },
   { key: 'PRIVATE', label: '비공개', count: 'privateCount' },
   { key: 'DRAFT', label: '임시저장', count: 'draftCount' },
   { key: 'CATEGORIES', label: '카테고리' },
+]
+
+// 발행한 글의 공개 범위를 바로 바꾸는 버튼 (POST-06, POST-12)
+const VISIBILITIES = [
+  { key: 'PUBLIC', label: '공개' },
+  { key: 'SUBSCRIBERS', label: '구독자 공개' },
+  { key: 'PRIVATE', label: '비공개' },
 ]
 
 // MNG-01 내 글 관리 + CAT-01·CAT-04 카테고리 관리
@@ -59,8 +67,8 @@ function MyPosts({ status, onChange }) {
     load()
     onChange()
   }
-  const toggle = async (p) => {
-    await api('PATCH', `/api/posts/${p.id}/visibility`, { visibility: p.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC' })
+  const changeVisibility = async (p, visibility) => {
+    await api('PATCH', `/api/posts/${p.id}/visibility`, { visibility })
     load()
     onChange()
   }
@@ -81,7 +89,9 @@ function MyPosts({ status, onChange }) {
             </div>
             <p className="actions">
               <Link to={`/write/${p.id}`}>{p.status === 'DRAFT' ? '이어 쓰기' : '수정'}</Link>
-              {p.status === 'PUBLISHED' && <button className="link" onClick={() => toggle(p)}>{p.visibility === 'PUBLIC' ? '비공개로' : '공개로'}</button>}
+              {p.status === 'PUBLISHED' && VISIBILITIES.filter((v) => v.key !== p.visibility).map((v) => (
+                <button key={v.key} className="link" onClick={() => changeVisibility(p, v.key)}>{v.label}로</button>
+              ))}
               <button className="link danger" onClick={() => remove(p)}>삭제</button>
             </p>
           </li>

@@ -120,6 +120,7 @@ export default function WritePage() {
         <fieldset>
           <legend>공개 범위</legend>
           <label className="inline"><input type="radio" name="visibility" value="PUBLIC" checked={form.visibility === 'PUBLIC'} onChange={set('visibility')} /> 공개</label>
+          <label className="inline"><input type="radio" name="visibility" value="SUBSCRIBERS" checked={form.visibility === 'SUBSCRIBERS'} onChange={set('visibility')} /> 구독자 공개</label>
           <label className="inline"><input type="radio" name="visibility" value="PRIVATE" checked={form.visibility === 'PRIVATE'} onChange={set('visibility')} /> 비공개</label>
         </fieldset>
       </div>

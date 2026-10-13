@@ -15,6 +15,8 @@ public class Post {
 
     public static final String PUBLIC = "PUBLIC";
     public static final String PRIVATE = "PRIVATE";
+    /** POST-12 구독자 공개: 주인과 구독자만 본문을 본다. */
+    public static final String SUBSCRIBERS = "SUBSCRIBERS";
     public static final String DRAFT = "DRAFT";
     public static final String PUBLISHED = "PUBLISHED";
 
@@ -112,6 +114,10 @@ public class Post {
 
     public boolean isPublic() {
         return PUBLIC.equals(visibility);
+    }
+
+    public boolean isSubscribersOnly() {
+        return SUBSCRIBERS.equals(visibility);
     }
 
     public Long getId() {

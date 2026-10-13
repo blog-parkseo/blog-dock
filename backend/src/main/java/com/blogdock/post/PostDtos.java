@@ -51,17 +51,20 @@ public final class PostDtos {
     }
 
     /** MNG-01 탭별 글 수. */
-    public record MyPostCounts(long publicCount, long privateCount, long draftCount) {
+    public record MyPostCounts(long publicCount, long subscribersCount, long privateCount, long draftCount) {
     }
 
     public record HomeResponse(List<PostSummary> items, String nextCursor) {
     }
 
-    /** POST-04 글 상세. */
+    /**
+     * POST-04 글 상세. locked=true면 구독자 공개 글을 구독하지 않은 사람이 연 것이라
+     * 제목·블로그·발행일만 채우고 본문·태그·이웃 글은 비운다 (POST-12).
+     */
     public record PostDetail(Long id, String slug, String title, String contentHtml, String visibility,
                              Instant publishedAt, Instant updatedAt, CategoryRef category, List<String> tags,
                              String thumbnailUrl, long likeCount, boolean liked, long commentCount,
-                             boolean isOwner, Neighbor prev, Neighbor next, BlogRef blog) {
+                             boolean isOwner, Neighbor prev, Neighbor next, BlogRef blog, boolean locked) {
     }
 
     /** 수정 화면에 채울 값 (주인만). */
