@@ -46,6 +46,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             order by p.publishedAt desc, p.id desc""")
     List<Post> findHome(Instant cursorAt, Long cursorId, Pageable pageable);
 
+    /** SUB-03 구독 피드: 내가 구독한 블로그의 공개 글. 홈과 같은 커서 방식. */
+    @Query("""
+            select p from Post p
+            where p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
+              and p.blogId in (select s.blogId from Subscription s where s.userId = :memberId)
+              and (:cursorAt is null or p.publishedAt < :cursorAt
+                   or (p.publishedAt = :cursorAt and p.id < :cursorId))
+            order by p.publishedAt desc, p.id desc""")
+    List<Post> findFeed(Long memberId, Instant cursorAt, Long cursorId, Pageable pageable);
+
     /** BLOG-04 사이드바: 카테고리별 글 수 (카테고리 없음 = null). */
     @Query("""
             select p.categoryId, count(p) from Post p

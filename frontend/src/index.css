@@ -149,6 +149,17 @@ legend { font-weight: 600; font-size: 14px; padding: 0 4px; color: var(--ink); }
 .blog-avatar { border: 4px solid #fff; box-shadow: var(--shadow); }
 .blog-title { font-family: var(--serif); font-size: 2rem; margin: 0; }
 .blog-desc { margin: 6px 0 0; color: #5a544d; }
+.blog-subscribe { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; padding: 0 36px 26px; margin-top: -12px; }
+.subscriber-count { color: #5a544d; font-size: 14px; }
+button.subscribe { padding: 8px 18px; font-size: 14px; border-radius: 999px; }
+button.subscribe.subscribed { background: var(--surface); }
+.author-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; margin: 0 0 28px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.author-box .author { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.author-box .author span { display: flex; flex-direction: column; }
+.author-box small { color: var(--muted); font-size: 13px; }
+.subscribed-blogs { list-style: none; padding: 0; margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+.subscribed-blog { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; font-size: 14px; }
+.subscribed-blog:hover { color: var(--accent); }
 .blog-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; align-items: start; }
 .sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 76px; }
 .side-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
@@ -270,6 +281,7 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
   .hero-art { display: none; }
   .post-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .blog-cover-inner { padding: 24px 20px; gap: 12px; flex-direction: column; align-items: flex-start; }
+  .blog-subscribe { padding: 0 20px 20px; margin-top: -4px; }
   .blog-cover .avatar { width: 60px !important; height: 60px !important; }
   .blog-title { font-size: 1.45rem; }
   .blog-layout { grid-template-columns: minmax(0, 1fr); }

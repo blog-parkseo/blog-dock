@@ -8,6 +8,7 @@ import Logo from './components/Logo'
 import RequireLogin from './components/RequireLogin'
 import ErrorView from './components/ErrorView'
 import HomePage from './pages/HomePage'
+import FeedPage from './pages/FeedPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import BlogCreatePage from './pages/BlogCreatePage'
@@ -40,6 +41,7 @@ function Header() {
         <span className="spacer" />
         {me ? (
           <nav className="header-nav">
+            <SmartLink to={mainLink('/feed')} className="nav-link">구독 피드</SmartLink>
             {me.blogAddress && <SmartLink to={mainLink(`/blog/${me.blogAddress}`)} className="nav-link">내 블로그</SmartLink>}
             {me.blogAddress && <SmartLink to={mainLink('/manage')} className="nav-link">관리</SmartLink>}
             {me.role === 'ADMIN' && <SmartLink to={mainLink('/admin')} className="nav-link">서비스 관리</SmartLink>}
@@ -105,6 +107,7 @@ export default function App() {
               : <Route path="/blog/:address" element={<BlogLayout />}>{blogChildren}</Route>}
             <Route path="/write" element={<RequireLogin><WritePage /></RequireLogin>} />
             <Route path="/write/:postId" element={<RequireLogin><WritePage /></RequireLogin>} />
+            <Route path="/feed" element={<RequireLogin><FeedPage /></RequireLogin>} />
             <Route path="/manage" element={<RequireLogin><ManagePage /></RequireLogin>} />
             <Route path="/settings" element={<RequireLogin><SettingsPage /></RequireLogin>} />
             <Route path="/admin" element={<RequireLogin><AdminPage /></RequireLogin>} />

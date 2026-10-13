@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -225,6 +226,18 @@ public class PostService {
     /** HOME-01 홈 최신 글. 커서로 이어 불러와서 중복·누락이 없다. */
     @Transactional(readOnly = true)
     public HomeResponse home(String cursor) {
+        return cursorPage(cursor, (at, id) -> postRepository.findHome(at, id, PageRequest.of(0, HOME_SIZE + 1)));
+    }
+
+    /** SUB-03 구독 피드. 홈과 같은 커서 방식이다. */
+    @Transactional(readOnly = true)
+    public HomeResponse feed(Long memberId, String cursor) {
+        return cursorPage(cursor,
+                (at, id) -> postRepository.findFeed(memberId, at, id, PageRequest.of(0, HOME_SIZE + 1)));
+    }
+
+    /** 커서는 "마지막 글의 발행 시각_id". HOME_SIZE+1개를 읽어 다음이 있는지 안다. */
+    private HomeResponse cursorPage(String cursor, BiFunction<Instant, Long, List<Post>> fetch) {
         Instant at = null;
         Long id = null;
         if (cursor != null && !cursor.isBlank()) {
@@ -236,7 +249,7 @@ public class PostService {
                 throw ApiException.invalid("cursor", "잘못된 위치예요");
             }
         }
-        List<Post> rows = postRepository.findHome(at, id, PageRequest.of(0, HOME_SIZE + 1));
+        List<Post> rows = fetch.apply(at, id);
         boolean more = rows.size() > HOME_SIZE;
         List<Post> items = more ? rows.subList(0, HOME_SIZE) : rows;
         String next = null;

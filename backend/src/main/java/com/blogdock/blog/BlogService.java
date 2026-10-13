@@ -10,6 +10,7 @@ import com.blogdock.blog.BlogDtos.BlogResponse;
 import com.blogdock.blog.BlogDtos.CreateRequest;
 import com.blogdock.blog.BlogDtos.UpdateRequest;
 import com.blogdock.common.ApiException;
+import com.blogdock.subscription.SubscriptionService;
 
 @Service
 public class BlogService {
@@ -19,10 +20,13 @@ public class BlogService {
 
     private final BlogRepository blogRepository;
     private final ReservedWordRepository reservedWordRepository;
+    private final SubscriptionService subscriptionService;
 
-    public BlogService(BlogRepository blogRepository, ReservedWordRepository reservedWordRepository) {
+    public BlogService(BlogRepository blogRepository, ReservedWordRepository reservedWordRepository,
+                       SubscriptionService subscriptionService) {
         this.blogRepository = blogRepository;
         this.reservedWordRepository = reservedWordRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     /** BLOG-01: 입력 단계에서 주소를 미리 검사한다. */
@@ -44,13 +48,14 @@ public class BlogService {
             throw ApiException.invalid("address", messageOf(problem));
         }
         Blog blog = blogRepository.save(Blog.open(memberId, address, req.name().trim(), blankToNull(req.description())));
-        return BlogResponse.of(blog, memberId);
+        return BlogResponse.of(blog, memberId, subscriptionService.status(blog.getId(), memberId));
     }
 
     /** BLOG-02, BLOG-03: 블로그 정보. 없으면 404. */
     @Transactional(readOnly = true)
     public BlogResponse get(String address, Long viewerId) {
-        return BlogResponse.of(find(address), viewerId);
+        Blog blog = find(address);
+        return BlogResponse.of(blog, viewerId, subscriptionService.status(blog.getId(), viewerId));
     }
 
     /** BLOG-02: 주인만 이름·소개를 바꾼다. 주소는 받지 않는다. */
@@ -61,7 +66,7 @@ public class BlogService {
             throw ApiException.forbidden("내 블로그만 고칠 수 있어요");
         }
         blog.update(req.name().trim(), blankToNull(req.description()), blankToNull(req.profileImageUrl()));
-        return BlogResponse.of(blog, memberId);
+        return BlogResponse.of(blog, memberId, subscriptionService.status(blog.getId(), memberId));
     }
 
     private Blog find(String address) {

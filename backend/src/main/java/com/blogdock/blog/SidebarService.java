@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.blogdock.category.CategoryRepository;
 import com.blogdock.post.PostRepository;
+import com.blogdock.subscription.SubscriptionService;
 
 /**
  * BLOG-04 사이드바: 블로그 이름·프로필, 카테고리 목록과 글 수.
@@ -21,11 +22,14 @@ public class SidebarService {
     private final BlogAccess blogAccess;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
+    private final SubscriptionService subscriptionService;
 
-    public SidebarService(BlogAccess blogAccess, CategoryRepository categoryRepository, PostRepository postRepository) {
+    public SidebarService(BlogAccess blogAccess, CategoryRepository categoryRepository, PostRepository postRepository,
+                          SubscriptionService subscriptionService) {
         this.blogAccess = blogAccess;
         this.categoryRepository = categoryRepository;
         this.postRepository = postRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional(readOnly = true)
@@ -42,8 +46,9 @@ public class SidebarService {
         List<CategoryCount> categories = categoryRepository.findByBlogIdOrderBySortOrderAscIdAsc(blog.getId()).stream()
                 .map(c -> new CategoryCount(c.getId(), c.getName(), counts.getOrDefault(c.getId(), 0L)))
                 .toList();
-        return new Sidebar(BlogDtos.BlogResponse.of(blog, viewerId), total, categories,
-                counts.getOrDefault(null, 0L));
+        BlogDtos.BlogResponse info = BlogDtos.BlogResponse.of(blog, viewerId,
+                subscriptionService.status(blog.getId(), viewerId));
+        return new Sidebar(info, total, categories, counts.getOrDefault(null, 0L));
     }
 
     public record CategoryCount(Long id, String name, long count) {

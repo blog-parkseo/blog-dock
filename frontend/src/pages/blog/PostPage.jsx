@@ -7,12 +7,13 @@ import { formatDate, formatDateTime } from '../../format'
 import ErrorView from '../../components/ErrorView'
 import SmartLink from '../../components/SmartLink'
 import Avatar from '../../components/Avatar'
+import SubscribeButton from '../../components/SubscribeButton'
 import { useBlog } from './BlogLayout'
 
 // POST-04 글 상세
 export default function PostPage() {
   const { slug } = useParams()
-  const { address, link, reload: reloadSidebar } = useBlog()
+  const { address, link, blog, setSubscription, reload: reloadSidebar } = useBlog()
   const { me } = useAuth()
   const navigate = useNavigate()
   const [post, setPost] = useState(null)
@@ -68,6 +69,17 @@ export default function PostPage() {
         <LikeButton post={post} onChange={(r) => setPost({ ...post, liked: r.liked, likeCount: r.likeCount })} />
         <ShareButton url={postPermalink(address, post.slug)} />
       </div>
+      {/* SUB-01: 글을 다 읽은 자리에서도 구독할 수 있게 */}
+      <section className="author-box">
+        <SmartLink to={link('')} className="author">
+          <Avatar name={blog.name} src={blog.profileImageUrl} size={48} />
+          <span>
+            <strong>{blog.name}</strong>
+            <small>구독자 {blog.subscriberCount}명</small>
+          </span>
+        </SmartLink>
+        <SubscribeButton blog={blog} address={address} onChange={setSubscription} />
+      </section>
       <nav className="neighbors">
         {post.prev ? <SmartLink to={link(post.prev.slug)} className="neighbor"><small>← 이전 글</small><span>{post.prev.title}</span></SmartLink> : <span />}
         {post.next ? <SmartLink to={link(post.next.slug)} className="neighbor next"><small>다음 글 →</small><span>{post.next.title}</span></SmartLink> : <span />}

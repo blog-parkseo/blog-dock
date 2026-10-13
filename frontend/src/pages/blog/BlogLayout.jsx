@@ -6,6 +6,7 @@ import { blogLink } from '../../blogUrl'
 import SmartLink from '../../components/SmartLink'
 import ErrorView from '../../components/ErrorView'
 import Avatar, { colorOf } from '../../components/Avatar'
+import SubscribeButton from '../../components/SubscribeButton'
 
 const BlogContext = createContext(null)
 export const useBlog = () => useContext(BlogContext)
@@ -30,8 +31,11 @@ export default function BlogLayout({ address: hostAddress }) {
 
   const link = (sub) => blogLink(address, sub)
   const { blog } = sidebar
+  // 구독·해제하면 버튼과 구독자 수를 바로 바꾼다 (블로그 위쪽과 글 아래가 같이 바뀐다)
+  const setSubscription = (r) =>
+    setSidebar((s) => ({ ...s, blog: { ...s.blog, subscribed: r.subscribed, subscriberCount: r.subscriberCount } }))
   return (
-    <BlogContext.Provider value={{ address, blog, sidebar, reload, link }}>
+    <BlogContext.Provider value={{ address, blog, sidebar, reload, link, setSubscription }}>
       <section className="blog-cover" style={{ '--cover': colorOf(address) }}>
         <SmartLink to={link('')} className="blog-cover-inner">
           <Avatar name={blog.name} src={blog.profileImageUrl} size={84} className="blog-avatar" />
@@ -41,6 +45,10 @@ export default function BlogLayout({ address: hostAddress }) {
             {blog.description && <p className="blog-desc">{blog.description}</p>}
           </div>
         </SmartLink>
+        <div className="blog-subscribe">
+          <span className="subscriber-count">구독자 {blog.subscriberCount}명</span>
+          <SubscribeButton blog={blog} address={address} onChange={setSubscription} />
+        </div>
       </section>
       <div className="blog-layout">
         <section className="blog-content"><Outlet /></section>

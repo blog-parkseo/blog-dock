@@ -1,5 +1,7 @@
 package com.blogdock.blog;
 
+import com.blogdock.subscription.SubscriptionService.SubscriptionResponse;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -30,12 +32,14 @@ public final class BlogDtos {
     public record AddressCheckResponse(boolean available, String reason) {
     }
 
+    /** subscriberCount: 구독자 수, subscribed: 보는 사람이 구독했는지 (SUB-01). */
     public record BlogResponse(String address, String name, String description,
-                               String profileImageUrl, boolean isOwner) {
+                               String profileImageUrl, boolean isOwner, long subscriberCount, boolean subscribed) {
 
-        public static BlogResponse of(Blog blog, Long viewerId) {
+        public static BlogResponse of(Blog blog, Long viewerId, SubscriptionResponse subscription) {
             return new BlogResponse(blog.getAddress(), blog.getName(), blog.getDescription(),
-                    blog.getProfileImageUrl(), viewerId != null && blog.isOwnedBy(viewerId));
+                    blog.getProfileImageUrl(), viewerId != null && blog.isOwnedBy(viewerId),
+                    subscription.subscriberCount(), subscription.subscribed());
         }
     }
 }
