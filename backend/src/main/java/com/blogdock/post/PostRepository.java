@@ -1,6 +1,7 @@
 package com.blogdock.post;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,6 +73,29 @@ public interface PostRepository extends JpaRepository<Post, Long> {
               and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
             group by c.postId""")
     List<Object[]> countRecentComments(Instant since);
+
+    /** HOME-04 인기 블로거: since 이후 블로그별 공개 글이 받은 공감 수 [블로그 id, 개수]. */
+    @Query("""
+            select p.blogId, count(l) from PostLike l, Post p
+            where p.id = l.postId and l.createdAt >= :since
+              and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
+            group by p.blogId""")
+    List<Object[]> countRecentLikesByBlog(Instant since);
+
+    /** HOME-04 인기 블로거: since 이후 블로그별 공개 글이 받은 댓글 수. 블로그 주인 본인 댓글은 뺀다. */
+    @Query("""
+            select p.blogId, count(c) from Comment c, Post p, Blog b
+            where p.id = c.postId and b.id = p.blogId and c.createdAt >= :since
+              and c.authorId <> b.ownerId
+              and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'
+            group by p.blogId""")
+    List<Object[]> countRecentCommentsByBlog(Instant since);
+
+    /** 이 블로그들 중 공개 글이 하나라도 있는 블로그. */
+    @Query("""
+            select distinct p.blogId from Post p
+            where p.blogId in :blogIds and p.status = 'PUBLISHED' and p.visibility = 'PUBLIC'""")
+    List<Long> findBlogIdsWithPublicPosts(Collection<Long> blogIds);
 
     /** BLOG-04 사이드바: 카테고리별 글 수 (카테고리 없음 = null). */
     @Query("""

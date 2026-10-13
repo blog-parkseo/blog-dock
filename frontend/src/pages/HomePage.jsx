@@ -5,6 +5,7 @@ import { blogLink, mainLink } from '../blogUrl'
 import Avatar from '../components/Avatar'
 import PostList from '../components/PostList'
 import SmartLink from '../components/SmartLink'
+import SubscribeButton from '../components/SubscribeButton'
 
 // HOME-01 홈 최신 글: 모든 블로그의 공개 글. 더보기로 이어 불러온다 (커서라 중복·누락이 없다)
 export default function HomePage() {
@@ -33,6 +34,12 @@ export default function HomePage() {
   // HOME-02 인기 글 (서버가 10분마다 새로 계산한다)
   const [popular, setPopular] = useState(null)
   useEffect(() => { api('GET', '/api/home/popular').then(setPopular).catch(() => setPopular([])) }, [])
+
+  // HOME-04 인기 블로거. 순위는 10분마다, 구독 버튼 상태는 로그인한 사람 기준이라 로그인이 바뀌면 다시 받는다
+  const [bloggers, setBloggers] = useState([])
+  useEffect(() => { api('GET', '/api/home/bloggers').then(setBloggers).catch(() => setBloggers([])) }, [me?.id])
+  const updateBlogger = (address, r) =>
+    setBloggers((list) => list.map((b) => (b.address === address ? { ...b, ...r } : b)))
 
   let cta = { to: mainLink('/login'), label: '로그인하고 시작하기' }
   if (me) cta = me.blogAddress ? { to: mainLink('/write'), label: '새 글 쓰기' } : { to: mainLink('/blog/new'), label: '내 블로그 만들기' }
@@ -72,6 +79,28 @@ export default function HomePage() {
             ))}
           </ol>
         ))}
+      {/* 인기 블로거가 없으면 영역을 숨긴다 */}
+      {bloggers.length > 0 && (
+        <>
+          <div className="section-head">
+            <h2>인기 블로거</h2>
+            <p className="hint">최근 7일 동안 공감·댓글·새 구독자를 많이 받은 블로그예요.</p>
+          </div>
+          <ol className="blogger-list">
+            {bloggers.map((b, i) => (
+              <li key={b.address} className="blogger-card">
+                <span className="rank">{i + 1}</span>
+                <SmartLink to={blogLink(b.address, '')} className="blogger-link">
+                  <Avatar name={b.name} src={b.profileImageUrl} size={56} />
+                  <strong>{b.name}</strong>
+                  <small>구독자 {b.subscriberCount}명</small>
+                </SmartLink>
+                <SubscribeButton blog={b} address={b.address} onChange={(r) => updateBlogger(b.address, r)} />
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
       <div className="section-head">
         <h2>최신 글</h2>
         <p className="hint">모든 블로그의 공개 글을 새로 올라온 순서로 보여 줘요.</p>

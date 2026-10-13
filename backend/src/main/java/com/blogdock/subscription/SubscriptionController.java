@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.blogdock.auth.LoginMember;
+import com.blogdock.blog.BlogDtos.BlogResponse;
 import com.blogdock.post.PostDtos.HomeResponse;
 import com.blogdock.post.PostService;
 import com.blogdock.subscription.SubscriptionService.SubscribedBlog;
@@ -22,10 +23,19 @@ public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
     private final PostService postService;
+    private final PopularBloggerService popularBloggerService;
 
-    public SubscriptionController(SubscriptionService subscriptionService, PostService postService) {
+    public SubscriptionController(SubscriptionService subscriptionService, PostService postService,
+                                  PopularBloggerService popularBloggerService) {
         this.subscriptionService = subscriptionService;
         this.postService = postService;
+        this.popularBloggerService = popularBloggerService;
+    }
+
+    /** HOME-04 인기 블로거 (10분마다 새로 계산). 로그인했으면 구독 버튼 상태도 같이 준다. */
+    @GetMapping("/api/home/bloggers")
+    public List<BlogResponse> bloggers(@AuthenticationPrincipal LoginMember login) {
+        return popularBloggerService.popular(LoginMember.idOf(login));
     }
 
     @PostMapping("/api/blogs/{address}/subscription")
