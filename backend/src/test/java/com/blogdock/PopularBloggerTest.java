@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.blogdock.subscription.PopularBloggerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/** HOME-04 인기 블로거. */
+/** HOME-04 인기 블로거 순위와 SUB-06 추천 블로그. */
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:blogger;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @Import(CsrfForTests.class)
@@ -114,5 +114,20 @@ class PopularBloggerTest {
         // 비회원도 볼 수 있고, 블로그 주인에게는 자기 카드가 주인으로 표시된다
         mvc.perform(get("/api/home/bloggers")).andExpect(jsonPath("$", hasSize(3)));
         mvc.perform(get("/api/home/bloggers").session(b)).andExpect(jsonPath("$[0].isOwner").value(true));
+
+        // SUB-06 추천 블로그: 구독한 블로그(B)와 내 블로그는 빠진다
+        mvc.perform(get("/api/me/recommended-blogs").session(r1))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].address").value("bg-a"))
+                .andExpect(jsonPath("$[1].address").value("bg-e"));
+        mvc.perform(get("/api/me/recommended-blogs").session(a))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].address").value("bg-b"))
+                .andExpect(jsonPath("$[1].address").value("bg-e"));
+        // 구독하면 바로 추천에서 빠진다
+        mvc.perform(post("/api/blogs/bg-a/subscription").session(r1)).andExpect(status().isOk());
+        mvc.perform(get("/api/me/recommended-blogs").session(r1))
+                .andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].address").value("bg-e"));
+        mvc.perform(get("/api/me/recommended-blogs").session(new MockHttpSession())).andExpect(status().isUnauthorized());
     }
 }

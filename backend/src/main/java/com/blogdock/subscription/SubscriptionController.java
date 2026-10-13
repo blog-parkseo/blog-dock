@@ -48,6 +48,12 @@ public class SubscriptionController {
         return subscriptionService.unsubscribe(address, LoginMember.require(login));
     }
 
+    /** SUB-06 추천 블로그: 아직 구독하지 않은 인기 블로그 5개. */
+    @GetMapping("/api/me/recommended-blogs")
+    public List<BlogResponse> recommended(@AuthenticationPrincipal LoginMember login) {
+        return popularBloggerService.recommended(LoginMember.require(login));
+    }
+
     @GetMapping("/api/me/subscriptions")
     public List<SubscribedBlog> mine(@AuthenticationPrincipal LoginMember login) {
         return subscriptionService.mine(LoginMember.require(login));

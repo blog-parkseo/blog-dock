@@ -102,6 +102,7 @@ legend { font-weight: 600; font-size: 14px; padding: 0 4px; color: var(--ink); }
 /* 빈 상태 */
 .empty { text-align: center; color: var(--muted); padding: 48px 16px; background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); }
 .empty p { margin: 8px 0 0; }
+.empty .button { margin-top: 16px; }
 
 /* 아바타 */
 .avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--surface-soft); }
@@ -165,6 +166,10 @@ legend { font-weight: 600; font-size: 14px; padding: 0 4px; color: var(--ink); }
 .blogger-link strong { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .blogger-link small { color: var(--muted); font-size: 13px; }
 .blogger-link:hover strong { color: var(--accent); }
+.recommend { margin: 0 0 28px; }
+.recommend h3 { margin: 0; font-size: 1.05rem; }
+.recommend .hint { margin: 4px 0 12px; }
+.recommend .blogger-list { margin-bottom: 0; }
 .popular-empty { margin: 0 0 40px; padding: 28px 16px; }
 .tab-count { display: inline-block; margin-left: 6px; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--line); color: var(--muted); font-size: 12px; font-weight: 600; text-align: center; }
 .subscriber-count { color: #5a544d; font-size: 14px; }
