@@ -345,9 +345,14 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
 .notifications-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .notification-list { list-style: none; margin: 8px 0 0; padding: 0; }
 .notification-list li + li { border-top: 1px solid var(--line); }
-.notification { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 14px 10px; border: 0; border-radius: 10px; background: none; text-align: left; font: inherit; color: var(--muted); cursor: pointer; }
+.notification-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-radius: 10px; }
+.notification-row.unread { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.notification-row.unread .notification { color: var(--ink); }
+.notification { display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0; padding: 14px 10px; border: 0; border-radius: 10px; background: none; text-align: left; font: inherit; color: var(--muted); cursor: pointer; }
 .notification:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
-.notification.unread { color: var(--ink); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.notification-side { flex: none; margin: 0 10px 0 auto; }
+.notification-side.hint { font-size: 13px; color: var(--muted); }
+.notification-side.subscribed:disabled { opacity: 1; cursor: default; }
 .notification-icon { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 15px; }
 .notification-main { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .notification-text { font-weight: 500; overflow-wrap: anywhere; }

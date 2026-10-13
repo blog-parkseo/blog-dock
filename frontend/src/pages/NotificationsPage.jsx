@@ -8,6 +8,13 @@ import { NOTIFICATIONS_CHANGED } from '../components/NotificationBell'
 const ICON = { COMMENT: '💬', LIKE: '♥', SUBSCRIBE: '➕', NEW_POST: '📝' }
 const changed = () => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED))
 
+// SUB-05 구독 알림 옆 맞구독 버튼. 맞구독은 서로 블로그가 있어야 해서, 상대 블로그가 없으면 안내만 한다
+function SubscribeBack({ n, onClick }) {
+  if (!n.address) return <span className="notification-side hint">블로그가 아직 없어서 맞구독할 수 없어요</span>
+  if (n.subscribed) return <button className="notification-side subscribe subscribed mutual" disabled>✓ 맞구독중</button>
+  return <button className="notification-side subscribe primary" onClick={onClick}>+ 맞구독하기</button>
+}
+
 // NOTI-02 알림 화면. 최신순, 더보기는 커서 방식
 export default function NotificationsPage() {
   const navigate = useNavigate()
@@ -42,6 +49,18 @@ export default function NotificationsPage() {
     else navigate(to.href)
   }
 
+  // 구독 알림에서 바로 맞구독. 알림도 읽음으로 바꾼다
+  const subscribeBack = async (n) => {
+    try {
+      await api('POST', `/api/blogs/${n.address}/subscription`)
+      const r = await api('POST', `/api/notifications/${n.id}/read`)
+      setItems((prev) => prev.map((x) => (x.id === n.id ? r : x)))
+      changed()
+    } catch (err) {
+      window.alert(err.message)
+    }
+  }
+
   const readAll = async () => {
     await api('POST', '/api/notifications/read-all')
     setItems((prev) => prev.map((x) => ({ ...x, read: true })))
@@ -60,8 +79,8 @@ export default function NotificationsPage() {
       ) : (
         <ul className="notification-list">
           {items.map((n) => (
-            <li key={n.id}>
-              <button className={`notification${n.read ? '' : ' unread'}`} onClick={() => open(n)}>
+            <li key={n.id} className={`notification-row${n.read ? '' : ' unread'}`}>
+              <button className="notification" onClick={() => open(n)}>
                 <span className="notification-icon" aria-hidden="true">{ICON[n.type]}</span>
                 <span className="notification-main">
                   <span className="notification-text">{n.message}</span>
@@ -70,6 +89,7 @@ export default function NotificationsPage() {
                 </span>
                 {!n.read && <span className="unread-dot" aria-label="읽지 않음" />}
               </button>
+              {n.type === 'SUBSCRIBE' && <SubscribeBack n={n} onClick={() => subscribeBack(n)} />}
             </li>
           ))}
         </ul>

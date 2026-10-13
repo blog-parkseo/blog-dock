@@ -31,6 +31,7 @@ import com.blogdock.notification.NotificationEvents.PostPublished;
 import com.blogdock.post.Post;
 import com.blogdock.post.PostRepository;
 import com.blogdock.post.PostService;
+import com.blogdock.subscription.Subscription;
 import com.blogdock.subscription.SubscriptionRepository;
 
 /** NOTI-01 알림 만들기, NOTI-02 알림 목록·읽음, NOTI-03 오래된 알림 지우기. */
@@ -189,26 +190,31 @@ public class NotificationService {
                 .filter(Objects::nonNull).collect(Collectors.toSet())), Post::getId);
         Map<Long, Blog> blogs = byId(blogRepository.findAllById(list.stream().map(Notification::getBlogId)
                 .filter(Objects::nonNull).collect(Collectors.toSet())), Blog::getId);
-        Map<Long, Boolean> subscribed = new HashMap<>();
+        Map<Long, Boolean> subscriberOf = new HashMap<>();
         return list.stream().map(n -> {
             String address = null;
             String slug = null;
             boolean available = true;
+            boolean subscribed = false;
             if (n.getPostId() != null) {
                 Post post = posts.get(n.getPostId());
                 Blog blog = post == null ? null : blogs.get(post.getBlogId());
                 available = blog != null && PostService.canView(post, blog.isOwnedBy(memberId),
-                        subscribed.computeIfAbsent(blog.getId(), k -> blogAccess.isSubscriber(blog, memberId)));
+                        subscriberOf.computeIfAbsent(blog.getId(), k -> blogAccess.isSubscriber(blog, memberId)));
                 if (available) {
                     address = blog.getAddress();
                     slug = post.getSlug();
                 }
             } else if (Notification.SUBSCRIBE.equals(n.getType()) && n.getActorId() != null) {
-                // 구독한 사람의 블로그가 있으면 그리로 간다
-                address = blogRepository.findByOwnerId(n.getActorId()).map(Blog::getAddress).orElse(null);
+                // 구독한 사람의 블로그가 있으면 그리로 가고, 알림 화면에서 바로 맞구독할 수 있다
+                Blog actorBlog = blogRepository.findByOwnerId(n.getActorId()).orElse(null);
+                if (actorBlog != null) {
+                    address = actorBlog.getAddress();
+                    subscribed = subscriptionRepository.existsById(new Subscription.Key(memberId, actorBlog.getId()));
+                }
             }
             return new NotificationItem(n.getId(), n.getType(), message(n), address, slug, available,
-                    n.getReadAt() != null, n.getCreatedAt());
+                    n.getReadAt() != null, n.getCreatedAt(), subscribed);
         }).toList();
     }
 
@@ -227,9 +233,12 @@ public class NotificationService {
         return map;
     }
 
-    /** address·slug: 누르면 갈 곳 (slug가 없으면 블로그, 둘 다 없으면 이동 없음). available=false면 볼 수 없는 글. */
+    /**
+     * address·slug: 누르면 갈 곳 (slug가 없으면 블로그, 둘 다 없으면 이동 없음). available=false면 볼 수 없는 글.
+     * subscribed: 구독 알림에서 내가 그 사람 블로그를 이미 구독했는지 (맞구독 버튼 상태). 블로그가 없으면 address가 null.
+     */
     public record NotificationItem(Long id, String type, String message, String address, String slug,
-                                   boolean available, boolean read, Instant createdAt) {
+                                   boolean available, boolean read, Instant createdAt, boolean subscribed) {
     }
 
     public record NotificationPage(List<NotificationItem> items, String nextCursor) {

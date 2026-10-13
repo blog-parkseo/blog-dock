@@ -96,11 +96,21 @@ class NotificationTest {
                 .andExpect(jsonPath("$.items[0].message").value("민지님이 “한강 산책”에 공감했어요"))
                 .andExpect(jsonPath("$.items[0].address").value("noti-seohyun"))
                 .andExpect(jsonPath("$.items[1].message").value("민지님이 “한강 산책”에 댓글을 남겼어요"))
-                .andExpect(jsonPath("$.items[2].message").value("민지님이 내 블로그를 구독했어요"));
+                .andExpect(jsonPath("$.items[2].message").value("민지님이 내 블로그를 구독했어요"))
+                .andExpect(jsonPath("$.items[2].address").doesNotExist());
+        // 민지가 블로그를 만들면 구독 알림에서 맞구독할 수 있다
+        send(post("/api/blogs"), minji, Map.of("address", "noti-minji", "name", "민지의 블로그")).andExpect(status().isCreated());
+        mvc.perform(get("/api/notifications").session(seohyun))
+                .andExpect(jsonPath("$.items[2].address").value("noti-minji"))
+                .andExpect(jsonPath("$.items[2].subscribed").value(false));
+        mvc.perform(post("/api/blogs/noti-minji/subscription").session(seohyun))
+                .andExpect(jsonPath("$.subscribed").value(true)).andExpect(jsonPath("$.subscribesMe").value(true));
+        mvc.perform(get("/api/notifications").session(seohyun)).andExpect(jsonPath("$.items[2].subscribed").value(true));
 
         // 새 글: 구독자에게. 임시저장 → 발행 때 한 번, 수정은 다시 보내지 않는다. 비공개 글은 안 보낸다
         JsonNode draft = write(seohyun, "가을 하늘", "PUBLIC", false);
-        mvc.perform(get("/api/notifications/unread-count").session(minji)).andExpect(jsonPath("$.count").value(0));
+        // 민지는 서현의 맞구독 알림 하나만 있다
+        mvc.perform(get("/api/notifications/unread-count").session(minji)).andExpect(jsonPath("$.count").value(1));
         Map<String, Object> pub = new HashMap<>(Map.of("title", "가을 하늘", "contentMarkdown", "x",
                 "contentHtml", "<p>x</p>", "visibility", "PUBLIC", "publish", true));
         send(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/posts/" + draft.get("id").asLong()),
@@ -110,7 +120,7 @@ class NotificationTest {
         write(seohyun, "나만 보는 글", "PRIVATE", true);
         write(seohyun, "구독자 글", "SUBSCRIBERS", true);
         JsonNode mine = list(minji);
-        org.junit.jupiter.api.Assertions.assertEquals(2, mine.get("items").size());
+        org.junit.jupiter.api.Assertions.assertEquals(3, mine.get("items").size());
         org.junit.jupiter.api.Assertions.assertEquals("서현의 블로그에 새 글 “구독자 글”이 올라왔어요",
                 mine.get("items").get(0).get("message").asText());
         org.junit.jupiter.api.Assertions.assertEquals("서현의 블로그에 새 글 “가을 하늘”이 올라왔어요",
@@ -120,7 +130,7 @@ class NotificationTest {
         long firstId = mine.get("items").get(1).get("id").asLong();
         mvc.perform(post("/api/notifications/" + firstId + "/read").session(minji))
                 .andExpect(jsonPath("$.read").value(true)).andExpect(jsonPath("$.available").value(true));
-        mvc.perform(get("/api/notifications/unread-count").session(minji)).andExpect(jsonPath("$.count").value(1));
+        mvc.perform(get("/api/notifications/unread-count").session(minji)).andExpect(jsonPath("$.count").value(2));
         mvc.perform(delete("/api/posts/" + draft.get("id").asLong()).session(seohyun));
         mvc.perform(post("/api/notifications/" + firstId + "/read").session(minji))
                 .andExpect(jsonPath("$.available").value(false));
