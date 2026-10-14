@@ -65,7 +65,8 @@ function SocialLinks() {
     const ok = SOCIALS.find((s) => s.key === params.get('linked'))
     if (ok) return { ok: true, text: `${ok.name} 계정을 연결했어요.` }
     const err = LINK_ERRORS[params.get('linkError')]
-    return err ? { ok: false, text: err } : null
+    const reason = params.get('reason')
+    return err ? { ok: false, text: reason ? `${err} (원인: ${reason})` : err } : null
   })
 
   const load = () => api('GET', '/api/me/socials').then(setLinked).catch(() => setLinked([]))

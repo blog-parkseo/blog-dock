@@ -5,9 +5,12 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,8 @@ import jakarta.servlet.http.HttpSession;
  */
 @Component
 public class SocialLogin implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(SocialLogin.class);
 
     static final String REDIRECT_KEY = "LOGIN_REDIRECT";
     static final String LINK_KEY = "LINK_MEMBER_ID";
@@ -103,14 +108,23 @@ public class SocialLogin implements AuthenticationSuccessHandler, Authentication
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
-        if (popLink(request) != null) {
-            response.sendRedirect("/settings?linkError=failed");
-            return;
-        }
         String uri = request.getRequestURI();
         String provider = uri.endsWith("/google") ? "google" : uri.endsWith("/github") ? "github" : "kakao";
+        String reason = reason(exception);
+        log.warn("{} 로그인 실패: {} ({})", provider, reason, exception.getMessage());
+        if (popLink(request) != null) {
+            response.sendRedirect("/settings?linkError=failed&reason=" + reason);
+            return;
+        }
         String redirect = popRedirect(request);
-        response.sendRedirect("/login?error=" + provider + "&redirect=" + URLEncoder.encode(redirect, StandardCharsets.UTF_8));
+        response.sendRedirect("/login?error=" + provider + "&reason=" + reason
+                + "&redirect=" + URLEncoder.encode(redirect, StandardCharsets.UTF_8));
+    }
+
+    /** 실패 원인 코드 (예: access_denied, authorization_request_not_found). 화면에 안내 문구를 고르는 데 쓴다. */
+    static String reason(AuthenticationException exception) {
+        String code = exception instanceof OAuth2AuthenticationException e ? e.getError().getErrorCode() : "unknown";
+        return code != null && code.matches("[a-z_]{1,40}") ? code : "unknown";
     }
 
     private Long popLink(HttpServletRequest request) {

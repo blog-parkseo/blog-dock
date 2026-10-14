@@ -80,7 +80,7 @@ class SecurityTest {
         MockHttpServletResponse res = new MockHttpServletResponse();
         long before = memberRepository.count();
         socialLogin.onAuthenticationFailure(req, res, new OAuth2AuthenticationException("access_denied"));
-        assertThat(res.getRedirectedUrl()).isEqualTo("/login?error=kakao&redirect=%2F");
+        assertThat(res.getRedirectedUrl()).isEqualTo("/login?error=kakao&reason=access_denied&redirect=%2F");
         assertThat(memberRepository.count()).isEqualTo(before);
     }
 
@@ -106,7 +106,7 @@ class SecurityTest {
         SocialLogin.remember(req, "/blog/abc");
         MockHttpServletResponse res = new MockHttpServletResponse();
         socialLogin.onAuthenticationFailure(req, res, new OAuth2AuthenticationException("access_denied"));
-        assertThat(res.getRedirectedUrl()).isEqualTo("/login?error=google&redirect=%2Fblog%2Fabc");
+        assertThat(res.getRedirectedUrl()).isEqualTo("/login?error=google&reason=access_denied&redirect=%2Fblog%2Fabc");
     }
 
     /** 깃허브는 이름이 없으면 login 아이디를 닉네임으로 쓴다. */

@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ loginId: '', password: '' })
   const [nickname, setNickname] = useState('')
   const socialError = { kakao: '카카오', google: '구글', github: '깃허브' }[params.get('error')]
-  const [errors, setErrors] = useState(socialError ? { form: `${socialError} 로그인을 마치지 못했어요. 다시 시도해 주세요.` } : {})
+  const [errors, setErrors] = useState(socialError ? { form: socialErrorMessage(socialError, params.get('reason')) } : {})
 
   useEffect(() => { api('GET', '/api/auth/providers').then(setProviders).catch(() => setProviders({ password: true })) }, [])
   useEffect(() => { if (me) navigate(redirect, { replace: true }) }, [me, navigate, redirect])
@@ -92,4 +92,20 @@ export default function LoginPage() {
       )}
     </div>
   )
+}
+
+// 소셜 로그인 실패 원인별 안내. 모르는 원인은 코드를 같이 보여 줘서 물어볼 때 알 수 있게 한다
+function socialErrorMessage(name, reason) {
+  switch (reason) {
+    case 'access_denied':
+      return `${name} 로그인을 취소했거나 허락하지 않았어요. 다시 시도해 주세요.`
+    case 'authorization_request_not_found':
+      return `${name} 로그인 시간이 지났어요. 버튼을 한 번만 눌러 다시 시도해 주세요.`
+    case 'invalid_client':
+    case 'unauthorized_client':
+    case 'invalid_token_response':
+      return `${name} 로그인 설정에 문제가 있어요. (원인: ${reason})`
+    default:
+      return `${name} 로그인을 마치지 못했어요. 다시 시도해 주세요.${reason ? ` (원인: ${reason})` : ''}`
+  }
 }
