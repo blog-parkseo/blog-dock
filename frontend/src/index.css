@@ -68,9 +68,11 @@ button.danger, .danger { color: var(--danger) !important; }
 .button.kakao { width: 100%; background: #fee500; border-color: #fee500; color: #191919; padding: 13px; border-radius: 12px; margin: 8px 0 4px; }
 .button.kakao:hover { background: #f5dc00; border-color: #f5dc00; }
 .button.google { width: 100%; background: #fff; border-color: #dadce0; color: #1f1f1f; padding: 13px; border-radius: 12px; margin: 8px 0 4px; }
-.button.kakao, .button.google { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.button.kakao, .button.google, .button.github { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .button .mark { width: 18px; height: 18px; flex: none; }
 .button.google:hover { background: #f8f9fa; border-color: #c6c9cc; }
+.button.github { width: 100%; background: #24292f; border-color: #24292f; color: #fff; padding: 13px; border-radius: 12px; margin: 8px 0 4px; }
+.button.github:hover { background: #32383f; border-color: #32383f; }
 
 label { display: block; margin: 18px 0 6px; font-weight: 600; font-size: 14px; color: var(--ink); }
 label.inline { display: inline-flex; align-items: center; gap: 6px; margin: 4px 16px 4px 0; font-weight: 500; }

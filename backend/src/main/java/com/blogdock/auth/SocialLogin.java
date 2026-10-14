@@ -18,9 +18,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * AUTH-01 카카오·구글 로그인.
- * 화면 → /api/auth/kakao?redirect=/보던화면 → 카카오 → /login/oauth2/code/kakao → 보던 화면. 구글도 같다 (kakao 자리에 google).
- * 실패하거나 취소하면 아무것도 바꾸지 않고 /login?error=kakao (또는 google) 로 돌려보낸다.
+ * AUTH-01 카카오·구글·깃허브 로그인.
+ * 화면 → /api/auth/kakao?redirect=/보던화면 → 카카오 → /login/oauth2/code/kakao → 보던 화면. 구글·깃허브도 같다 (kakao 자리에 google, github).
+ * 실패하거나 취소하면 아무것도 바꾸지 않고 /login?error=kakao (또는 google, github) 로 돌려보낸다.
  */
 @Component
 public class SocialLogin implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
@@ -54,10 +54,16 @@ public class SocialLogin implements AuthenticationSuccessHandler, Authentication
         OAuth2User user = (OAuth2User) authentication.getPrincipal();
         Map<String, Object> attrs = user.getAttributes();
         Member member;
-        if ("google".equals(((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId())) {
+        String registrationId = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
+        if ("google".equals(registrationId)) {
             // 구글: sub(회원 번호), name(이름), picture(사진)
             member = authService.socialLogin("GOOGLE", String.valueOf(attrs.get("sub")),
                     (String) attrs.get("name"), (String) attrs.get("picture"));
+        } else if ("github".equals(registrationId)) {
+            // 깃허브: id(회원 번호), name(이름, 없으면 login 아이디), avatar_url(사진)
+            String name = (String) attrs.get("name");
+            member = authService.socialLogin("GITHUB", String.valueOf(attrs.get("id")),
+                    name == null || name.isBlank() ? (String) attrs.get("login") : name, (String) attrs.get("avatar_url"));
         } else {
             Map<String, Object> account = (Map<String, Object>) attrs.getOrDefault("kakao_account", Map.of());
             Map<String, Object> profile = (Map<String, Object>) account.getOrDefault("profile", Map.of());
@@ -73,7 +79,8 @@ public class SocialLogin implements AuthenticationSuccessHandler, Authentication
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
-        String provider = request.getRequestURI().endsWith("/google") ? "google" : "kakao";
+        String uri = request.getRequestURI();
+        String provider = uri.endsWith("/google") ? "google" : uri.endsWith("/github") ? "github" : "kakao";
         String redirect = popRedirect(request);
         response.sendRedirect("/login?error=" + provider + "&redirect=" + URLEncoder.encode(redirect, StandardCharsets.UTF_8));
     }

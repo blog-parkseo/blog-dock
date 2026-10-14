@@ -5,7 +5,7 @@ import { api, fieldErrors } from '../api'
 import Logo from '../components/Logo'
 import { safeRedirect, withRedirect } from '../safeRedirect'
 
-// AUTH-01 로그인: 아이디·비밀번호 + 카카오·구글(키를 넣었을 때) + 닉네임 로그인(내 맥에서 연습할 때만)
+// AUTH-01 로그인: 아이디·비밀번호 + 카카오·구글·깃허브(키를 넣었을 때) + 닉네임 로그인(내 맥에서 연습할 때만)
 export default function LoginPage() {
   const { me, login, devLogin } = useAuth()
   const navigate = useNavigate()
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [providers, setProviders] = useState(null)
   const [form, setForm] = useState({ loginId: '', password: '' })
   const [nickname, setNickname] = useState('')
-  const socialError = { kakao: '카카오', google: '구글' }[params.get('error')]
+  const socialError = { kakao: '카카오', google: '구글', github: '깃허브' }[params.get('error')]
   const [errors, setErrors] = useState(socialError ? { form: `${socialError} 로그인을 마치지 못했어요. 다시 시도해 주세요.` } : {})
 
   useEffect(() => { api('GET', '/api/auth/providers').then(setProviders).catch(() => setProviders({ password: true })) }, [])
@@ -62,7 +62,7 @@ export default function LoginPage() {
       </form>
       <p className="hint center">아직 회원이 아니면 <Link to={withRedirect('/signup', params)}>회원가입</Link></p>
 
-      {(providers?.kakao || providers?.google) && <div className="divider"><span>또는</span></div>}
+      {(providers?.kakao || providers?.google || providers?.github) && <div className="divider"><span>또는</span></div>}
       {providers?.kakao && (
         <a className="button kakao" href={`/api/auth/kakao?redirect=${encodeURIComponent(redirect)}`}>
           <KakaoMark />카카오로 시작하기
@@ -71,6 +71,11 @@ export default function LoginPage() {
       {providers?.google && (
         <a className="button google" href={`/api/auth/google?redirect=${encodeURIComponent(redirect)}`}>
           <GoogleMark />구글로 시작하기
+        </a>
+      )}
+      {providers?.github && (
+        <a className="button github" href={`/api/auth/github?redirect=${encodeURIComponent(redirect)}`}>
+          <GithubMark />깃허브로 시작하기
         </a>
       )}
 
@@ -105,6 +110,15 @@ function GoogleMark() {
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  )
+}
+
+// 깃허브 고양이(Octocat) 마크
+function GithubMark() {
+  return (
+    <svg className="mark" viewBox="0 0 16 16" aria-hidden="true">
+      <path fill="#fff" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
     </svg>
   )
 }

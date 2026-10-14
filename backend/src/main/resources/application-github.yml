@@ -1,0 +1,16 @@
+# 깃허브 로그인 켜기: SPRING_PROFILES_ACTIVE 에 github 를 더한다 (예: prod,kakao,google,github).
+# 키는 이 파일에 쓰지 않는다. 환경 변수 GH_CLIENT_ID, GH_CLIENT_SECRET 으로 넣는다 (GitHub에 올리지 않기).
+# GitHub Secrets는 이름이 GITHUB_ 로 시작할 수 없어서 GH_ 를 쓴다.
+# 깃허브 주소(authorization-uri 등)는 Spring이 이미 알고 있어서 provider를 따로 쓰지 않는다.
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GH_CLIENT_ID}
+            client-secret: ${GH_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            # 공개 프로필(이름, 사진)만 읽는다
+            scope: read:user
+            client-name: GitHub

@@ -13,8 +13,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 public class SocialController {
 
-    /** 보던 화면을 기억하고 카카오·구글 로그인으로 보낸다. 키가 없으면 로그인 화면이 버튼을 숨긴다. */
-    @GetMapping("/api/auth/{provider:kakao|google}")
+    /** 보던 화면을 기억하고 카카오·구글·깃허브 로그인으로 보낸다. 키가 없으면 로그인 화면이 버튼을 숨긴다. */
+    @GetMapping("/api/auth/{provider:kakao|google|github}")
     public void start(@PathVariable String provider, @RequestParam(required = false) String redirect,
                       HttpServletRequest request, HttpServletResponse response) throws IOException {
         SocialLogin.remember(request, redirect);

@@ -18,7 +18,7 @@ mkdir -p uploads logs
 if [ -n "${DB_ADDRESS:-}" ]; then
   umask 077
   {
-    # 카카오·구글 키를 Secrets에 넣었으면 그 로그인도 켠다
+    # 카카오·구글·깃허브 키를 Secrets에 넣었으면 그 로그인도 켠다
     PROFILES=prod
     if [ -n "${KAKAO_CLIENT_ID:-}" ]; then
       PROFILES="$PROFILES,kakao"
@@ -29,6 +29,11 @@ if [ -n "${DB_ADDRESS:-}" ]; then
       PROFILES="$PROFILES,google"
       echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
       echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}"
+    fi
+    if [ -n "${GH_CLIENT_ID:-}" ]; then
+      PROFILES="$PROFILES,github"
+      echo "GH_CLIENT_ID=$GH_CLIENT_ID"
+      echo "GH_CLIENT_SECRET=${GH_CLIENT_SECRET:-}"
     fi
     echo "SPRING_PROFILES_ACTIVE=$PROFILES"
     echo "APP_PORT=${APP_PORT:-8080}"

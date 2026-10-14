@@ -83,6 +83,7 @@ public class AuthController {
         return Map.of(
                 "kakao", hasSocial("kakao"),
                 "google", hasSocial("google"),
+                "github", hasSocial("github"),
                 "password", true,
                 "dev", devLoginEnabled);
     }

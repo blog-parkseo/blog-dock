@@ -109,9 +109,28 @@ class SecurityTest {
         assertThat(res.getRedirectedUrl()).isEqualTo("/login?error=google&redirect=%2Fblog%2Fabc");
     }
 
+    /** 깃허브는 이름이 없으면 login 아이디를 닉네임으로 쓴다. */
+    @Test
+    void github_success_uses_login_when_no_name() throws Exception {
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        SocialLogin.remember(req, "/");
+        var attrs = new java.util.HashMap<String, Object>();
+        attrs.put("id", 777L);
+        attrs.put("login", "bori-dev");
+        attrs.put("name", null);
+        attrs.put("avatar_url", "https://example.com/a.png");
+        var user = new DefaultOAuth2User(List.of(new SimpleGrantedAuthority("OAUTH2_USER")), attrs, "id");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        socialLogin.onAuthenticationSuccess(req, res, new OAuth2AuthenticationToken(user, user.getAuthorities(), "github"));
+
+        var member = memberRepository.findBySocialProviderAndSocialId("GITHUB", "777").orElseThrow();
+        assertThat(member.getNickname()).isEqualTo("bori-dev");
+        assertThat(member.getProfileImageUrl()).isEqualTo("https://example.com/a.png");
+    }
+
     @Test
     void providers_without_social_keys() throws Exception {
         mvc.perform(get("/api/auth/providers")).andExpect(jsonPath("$.kakao").value(false))
-                .andExpect(jsonPath("$.google").value(false)).andExpect(jsonPath("$.dev").value(true));
+                .andExpect(jsonPath("$.google").value(false)).andExpect(jsonPath("$.github").value(false)).andExpect(jsonPath("$.dev").value(true));
     }
 }

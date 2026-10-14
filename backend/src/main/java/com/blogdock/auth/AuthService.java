@@ -64,10 +64,10 @@ public class AuthService {
                 .orElseGet(() -> memberRepository.save(Member.join("DEV", name, name)));
     }
 
-    /** 카카오·구글 로그인: 처음이면 가입(항상 일반 회원), 있으면 그 회원 (AUTH-01). */
+    /** 카카오·구글·깃허브 로그인: 처음이면 가입(항상 일반 회원), 있으면 그 회원 (AUTH-01). */
     @Transactional
     public Member socialLogin(String provider, String socialId, String nickname, String profileImageUrl) {
-        String name = nickname == null || nickname.isBlank() ? ("GOOGLE".equals(provider) ? "구글회원" : "카카오회원") : nickname.strip();
+        String name = nickname == null || nickname.isBlank() ? switch (provider) { case "GOOGLE" -> "구글회원"; case "GITHUB" -> "깃허브회원"; default -> "카카오회원"; } : nickname.strip();
         if (name.length() > 30) {
             name = name.substring(0, 30);
         }

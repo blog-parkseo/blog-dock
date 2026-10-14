@@ -96,7 +96,7 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());
 
-        // 카카오·구글 키를 넣고 kakao·google 프로필로 켰을 때만 소셜 로그인을 연다 (AUTH-01)
+        // 카카오·구글·깃허브 키를 넣고 kakao·google·github 프로필로 켰을 때만 소셜 로그인을 연다 (AUTH-01)
         if (socialClients.getIfAvailable() != null) {
             http.oauth2Login(oauth -> oauth
                     .successHandler(socialLogin)
