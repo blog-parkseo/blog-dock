@@ -16,3 +16,6 @@ backend/src/main/resources/application-local.yml
 backend/src/main/resources/static/
 deploy/app.jar
 deploy/seohyun-blog.tar.gz
+
+# 내 컴퓨터에서 실행할 때 생기는 H2 데이터 파일
+data/
