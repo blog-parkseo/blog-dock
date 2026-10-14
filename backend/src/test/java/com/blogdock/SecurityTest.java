@@ -19,7 +19,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 
-import com.blogdock.auth.KakaoLogin;
+import com.blogdock.auth.SocialLogin;
 import com.blogdock.auth.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -50,7 +50,7 @@ class SecurityTest {
     }
 
     @Autowired
-    KakaoLogin kakaoLogin;
+    SocialLogin socialLogin;
 
     @Autowired
     MemberRepository memberRepository;
@@ -59,11 +59,11 @@ class SecurityTest {
     @Test
     void kakao_success_creates_member_and_returns_to_page() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
-        KakaoLogin.remember(req, "/blog/abc/3");
+        SocialLogin.remember(req, "/blog/abc/3");
         var user = new DefaultOAuth2User(List.of(new SimpleGrantedAuthority("OAUTH2_USER")),
                 Map.of("id", 12345L, "kakao_account", Map.of("profile", Map.of("nickname", "카카오보리"))), "id");
         MockHttpServletResponse res = new MockHttpServletResponse();
-        kakaoLogin.onAuthenticationSuccess(req, res, new OAuth2AuthenticationToken(user, user.getAuthorities(), "kakao"));
+        socialLogin.onAuthenticationSuccess(req, res, new OAuth2AuthenticationToken(user, user.getAuthorities(), "kakao"));
 
         assertThat(res.getRedirectedUrl()).isEqualTo("/blog/abc/3");
         var member = memberRepository.findBySocialProviderAndSocialId("KAKAO", "12345").orElseThrow();
@@ -76,16 +76,42 @@ class SecurityTest {
     @Test
     void kakao_failure_and_unsafe_redirect() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
-        KakaoLogin.remember(req, "//evil.example");
+        SocialLogin.remember(req, "//evil.example");
         MockHttpServletResponse res = new MockHttpServletResponse();
         long before = memberRepository.count();
-        kakaoLogin.onAuthenticationFailure(req, res, new OAuth2AuthenticationException("access_denied"));
+        socialLogin.onAuthenticationFailure(req, res, new OAuth2AuthenticationException("access_denied"));
         assertThat(res.getRedirectedUrl()).isEqualTo("/login?error=kakao&redirect=%2F");
         assertThat(memberRepository.count()).isEqualTo(before);
     }
 
+    /** 구글이 돌려준 sub·name·picture로 가입한다. 카카오 회원과 번호가 같아도 다른 회원이다. */
     @Test
-    void providers_without_kakao_keys() throws Exception {
-        mvc.perform(get("/api/auth/providers")).andExpect(jsonPath("$.kakao").value(false)).andExpect(jsonPath("$.dev").value(true));
+    void google_success_creates_member() throws Exception {
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        SocialLogin.remember(req, "/");
+        var user = new DefaultOAuth2User(List.of(new SimpleGrantedAuthority("OAUTH2_USER")),
+                Map.of("sub", "12345", "name", "구글보리", "picture", "https://example.com/p.png"), "sub");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        socialLogin.onAuthenticationSuccess(req, res, new OAuth2AuthenticationToken(user, user.getAuthorities(), "google"));
+
+        assertThat(res.getRedirectedUrl()).isEqualTo("/");
+        var member = memberRepository.findBySocialProviderAndSocialId("GOOGLE", "12345").orElseThrow();
+        assertThat(member.getNickname()).isEqualTo("구글보리");
+        assertThat(member.getProfileImageUrl()).isEqualTo("https://example.com/p.png");
+    }
+
+    @Test
+    void google_failure_returns_google_error() throws Exception {
+        MockHttpServletRequest req = new MockHttpServletRequest("GET", "/login/oauth2/code/google");
+        SocialLogin.remember(req, "/blog/abc");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        socialLogin.onAuthenticationFailure(req, res, new OAuth2AuthenticationException("access_denied"));
+        assertThat(res.getRedirectedUrl()).isEqualTo("/login?error=google&redirect=%2Fblog%2Fabc");
+    }
+
+    @Test
+    void providers_without_social_keys() throws Exception {
+        mvc.perform(get("/api/auth/providers")).andExpect(jsonPath("$.kakao").value(false))
+                .andExpect(jsonPath("$.google").value(false)).andExpect(jsonPath("$.dev").value(true));
     }
 }

@@ -5,7 +5,7 @@ import { api, fieldErrors } from '../api'
 import Logo from '../components/Logo'
 import { safeRedirect, withRedirect } from '../safeRedirect'
 
-// AUTH-01 로그인: 아이디·비밀번호 + 카카오(키를 넣었을 때) + 닉네임 로그인(내 맥에서 연습할 때만)
+// AUTH-01 로그인: 아이디·비밀번호 + 카카오·구글(키를 넣었을 때) + 닉네임 로그인(내 맥에서 연습할 때만)
 export default function LoginPage() {
   const { me, login, devLogin } = useAuth()
   const navigate = useNavigate()
@@ -14,7 +14,8 @@ export default function LoginPage() {
   const [providers, setProviders] = useState(null)
   const [form, setForm] = useState({ loginId: '', password: '' })
   const [nickname, setNickname] = useState('')
-  const [errors, setErrors] = useState(params.get('error') === 'kakao' ? { form: '카카오 로그인을 마치지 못했어요. 다시 시도해 주세요.' } : {})
+  const socialError = { kakao: '카카오', google: '구글' }[params.get('error')]
+  const [errors, setErrors] = useState(socialError ? { form: `${socialError} 로그인을 마치지 못했어요. 다시 시도해 주세요.` } : {})
 
   useEffect(() => { api('GET', '/api/auth/providers').then(setProviders).catch(() => setProviders({ password: true })) }, [])
   useEffect(() => { if (me) navigate(redirect, { replace: true }) }, [me, navigate, redirect])
@@ -61,11 +62,12 @@ export default function LoginPage() {
       </form>
       <p className="hint center">아직 회원이 아니면 <Link to={withRedirect('/signup', params)}>회원가입</Link></p>
 
+      {(providers?.kakao || providers?.google) && <div className="divider"><span>또는</span></div>}
       {providers?.kakao && (
-        <>
-          <div className="divider"><span>또는</span></div>
-          <a className="button kakao" href={`/api/auth/kakao?redirect=${encodeURIComponent(redirect)}`}>카카오로 시작하기</a>
-        </>
+        <a className="button kakao" href={`/api/auth/kakao?redirect=${encodeURIComponent(redirect)}`}>카카오로 시작하기</a>
+      )}
+      {providers?.google && (
+        <a className="button google" href={`/api/auth/google?redirect=${encodeURIComponent(redirect)}`}>구글로 시작하기</a>
       )}
 
       {providers?.dev && (

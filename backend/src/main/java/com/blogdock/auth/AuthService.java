@@ -64,16 +64,16 @@ public class AuthService {
                 .orElseGet(() -> memberRepository.save(Member.join("DEV", name, name)));
     }
 
-    /** 카카오 로그인: 처음이면 가입(항상 일반 회원), 있으면 그 회원 (AUTH-01). */
+    /** 카카오·구글 로그인: 처음이면 가입(항상 일반 회원), 있으면 그 회원 (AUTH-01). */
     @Transactional
-    public Member kakaoLogin(String kakaoId, String nickname, String profileImageUrl) {
-        String name = nickname == null || nickname.isBlank() ? "카카오회원" : nickname.strip();
+    public Member socialLogin(String provider, String socialId, String nickname, String profileImageUrl) {
+        String name = nickname == null || nickname.isBlank() ? ("GOOGLE".equals(provider) ? "구글회원" : "카카오회원") : nickname.strip();
         if (name.length() > 30) {
             name = name.substring(0, 30);
         }
         String finalName = name;
-        Member m = memberRepository.findBySocialProviderAndSocialId("KAKAO", kakaoId)
-                .orElseGet(() -> memberRepository.save(Member.join("KAKAO", kakaoId, finalName)));
+        Member m = memberRepository.findBySocialProviderAndSocialId(provider, socialId)
+                .orElseGet(() -> memberRepository.save(Member.join(provider, socialId, finalName)));
         m.fillProfileImageIfEmpty(profileImageUrl);
         return m;
     }

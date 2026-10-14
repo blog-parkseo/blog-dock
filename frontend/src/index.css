@@ -67,6 +67,8 @@ button.link:hover { color: var(--ink); background: none; }
 button.danger, .danger { color: var(--danger) !important; }
 .button.kakao { width: 100%; background: #fee500; border-color: #fee500; color: #191919; padding: 13px; border-radius: 12px; margin: 8px 0 4px; }
 .button.kakao:hover { background: #f5dc00; border-color: #f5dc00; }
+.button.google { width: 100%; background: #fff; border-color: #dadce0; color: #1f1f1f; padding: 13px; border-radius: 12px; margin: 8px 0 4px; }
+.button.google:hover { background: #f8f9fa; border-color: #c6c9cc; }
 
 label { display: block; margin: 18px 0 6px; font-weight: 600; font-size: 14px; color: var(--ink); }
 label.inline { display: inline-flex; align-items: center; gap: 6px; margin: 4px 16px 4px 0; font-weight: 500; }

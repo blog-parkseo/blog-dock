@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -17,19 +18,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * AUTH-01 카카오 로그인.
- * 화면 → /api/auth/kakao?redirect=/보던화면 → 카카오 → /login/oauth2/code/kakao → 보던 화면.
- * 실패하거나 취소하면 아무것도 바꾸지 않고 /login?error=kakao 로 돌려보낸다.
+ * AUTH-01 카카오·구글 로그인.
+ * 화면 → /api/auth/kakao?redirect=/보던화면 → 카카오 → /login/oauth2/code/kakao → 보던 화면. 구글도 같다 (kakao 자리에 google).
+ * 실패하거나 취소하면 아무것도 바꾸지 않고 /login?error=kakao (또는 google) 로 돌려보낸다.
  */
 @Component
-public class KakaoLogin implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
+public class SocialLogin implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
 
     static final String REDIRECT_KEY = "LOGIN_REDIRECT";
 
     private final AuthService authService;
     private final LoginSession loginSession;
 
-    public KakaoLogin(AuthService authService, LoginSession loginSession) {
+    public SocialLogin(AuthService authService, LoginSession loginSession) {
         this.authService = authService;
         this.loginSession = loginSession;
     }
@@ -51,11 +52,18 @@ public class KakaoLogin implements AuthenticationSuccessHandler, AuthenticationF
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         OAuth2User user = (OAuth2User) authentication.getPrincipal();
-        String kakaoId = String.valueOf(user.getAttributes().get("id"));
-        Map<String, Object> account = (Map<String, Object>) user.getAttributes().getOrDefault("kakao_account", Map.of());
-        Map<String, Object> profile = (Map<String, Object>) account.getOrDefault("profile", Map.of());
-        Member member = authService.kakaoLogin(kakaoId,
-                (String) profile.get("nickname"), (String) profile.get("profile_image_url"));
+        Map<String, Object> attrs = user.getAttributes();
+        Member member;
+        if ("google".equals(((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId())) {
+            // 구글: sub(회원 번호), name(이름), picture(사진)
+            member = authService.socialLogin("GOOGLE", String.valueOf(attrs.get("sub")),
+                    (String) attrs.get("name"), (String) attrs.get("picture"));
+        } else {
+            Map<String, Object> account = (Map<String, Object>) attrs.getOrDefault("kakao_account", Map.of());
+            Map<String, Object> profile = (Map<String, Object>) account.getOrDefault("profile", Map.of());
+            member = authService.socialLogin("KAKAO", String.valueOf(attrs.get("id")),
+                    (String) profile.get("nickname"), (String) profile.get("profile_image_url"));
+        }
 
         String redirect = popRedirect(request);
         loginSession.save(member, request, response);
@@ -65,8 +73,9 @@ public class KakaoLogin implements AuthenticationSuccessHandler, AuthenticationF
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
+        String provider = request.getRequestURI().endsWith("/google") ? "google" : "kakao";
         String redirect = popRedirect(request);
-        response.sendRedirect("/login?error=kakao&redirect=" + URLEncoder.encode(redirect, StandardCharsets.UTF_8));
+        response.sendRedirect("/login?error=" + provider + "&redirect=" + URLEncoder.encode(redirect, StandardCharsets.UTF_8));
     }
 
     private String popRedirect(HttpServletRequest request) {

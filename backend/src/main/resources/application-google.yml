@@ -1,0 +1,15 @@
+# 구글 로그인 켜기: SPRING_PROFILES_ACTIVE 에 google 을 더한다 (예: prod,kakao,google).
+# 키는 이 파일에 쓰지 않는다. 환경 변수 GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET 으로 넣는다 (GitHub에 올리지 않기).
+# 구글 주소(authorization-uri 등)는 Spring이 이미 알고 있어서 provider를 따로 쓰지 않는다.
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            # 이름과 사진만 받는다 (이메일은 받지 않음)
+            scope: profile
+            client-name: Google

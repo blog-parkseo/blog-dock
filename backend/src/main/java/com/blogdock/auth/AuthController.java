@@ -25,17 +25,17 @@ public class AuthController {
 
     private final AuthService authService;
     private final LoginSession loginSession;
-    private final ObjectProvider<ClientRegistrationRepository> kakao;
+    private final ObjectProvider<ClientRegistrationRepository> socialClients;
     private final boolean devLoginEnabled;
     private final boolean devLoginAdmin;
 
     public AuthController(AuthService authService, LoginSession loginSession,
-                          ObjectProvider<ClientRegistrationRepository> kakao,
+                          ObjectProvider<ClientRegistrationRepository> socialClients,
                           @Value("${blogdock.dev-login.enabled:true}") boolean devLoginEnabled,
                           @Value("${blogdock.dev-login.admin:true}") boolean devLoginAdmin) {
         this.authService = authService;
         this.loginSession = loginSession;
-        this.kakao = kakao;
+        this.socialClients = socialClients;
         this.devLoginEnabled = devLoginEnabled;
         this.devLoginAdmin = devLoginAdmin;
     }
@@ -81,9 +81,16 @@ public class AuthController {
     @GetMapping("/api/auth/providers")
     public Map<String, Boolean> providers() {
         return Map.of(
-                "kakao", kakao.getIfAvailable() != null,
+                "kakao", hasSocial("kakao"),
+                "google", hasSocial("google"),
                 "password", true,
                 "dev", devLoginEnabled);
+    }
+
+    /** 그 소셜 로그인의 키를 넣고 켰는지. */
+    private boolean hasSocial(String registrationId) {
+        ClientRegistrationRepository clients = socialClients.getIfAvailable();
+        return clients != null && clients.findByRegistrationId(registrationId) != null;
     }
 
     /** 지금 로그인한 사람. 비회원이면 SecurityConfig가 401을 돌려준다. */

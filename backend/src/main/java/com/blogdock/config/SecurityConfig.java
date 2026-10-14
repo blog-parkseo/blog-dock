@@ -19,7 +19,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.util.StringUtils;
 
-import com.blogdock.auth.KakaoLogin;
+import com.blogdock.auth.SocialLogin;
 import com.blogdock.common.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -48,8 +48,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           ObjectProvider<ClientRegistrationRepository> kakaoClients,
-                                           KakaoLogin kakaoLogin,
+                                           ObjectProvider<ClientRegistrationRepository> socialClients,
+                                           SocialLogin socialLogin,
                                            @Value("${blogdock.cookie-domain:}") String cookieDomain) throws Exception {
         // CSRF: 서버가 XSRF-TOKEN 쿠키를 주고, 화면은 상태를 바꾸는 요청마다 X-XSRF-TOKEN 헤더로 돌려보낸다.
         // 다른 사이트는 이 쿠키를 읽을 수 없어서 요청을 흉내 낼 수 없다.
@@ -96,11 +96,11 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());
 
-        // 카카오 키를 넣고 kakao 프로필로 켰을 때만 카카오 로그인을 연다 (AUTH-01)
-        if (kakaoClients.getIfAvailable() != null) {
+        // 카카오·구글 키를 넣고 kakao·google 프로필로 켰을 때만 소셜 로그인을 연다 (AUTH-01)
+        if (socialClients.getIfAvailable() != null) {
             http.oauth2Login(oauth -> oauth
-                    .successHandler(kakaoLogin)
-                    .failureHandler(kakaoLogin));
+                    .successHandler(socialLogin)
+                    .failureHandler(socialLogin));
         }
         return http.build();
     }
