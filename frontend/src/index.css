@@ -421,12 +421,6 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
 .footer-menu { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
 .footer-menu button { color: var(--muted); font-size: 14px; padding: 0; }
 
-/* 블로그 사이트맵 (블로그 화면 아래쪽) */
-.blog-sitemap { margin: 40px 0 0; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
-.blog-sitemap-links { display: flex; flex-wrap: wrap; gap: 8px 10px; }
-.blog-sitemap-links a { padding: 5px 12px; border-radius: 999px; background: var(--surface-soft); border: 1px solid var(--line); color: var(--ink); font-size: 14px; }
-.blog-sitemap-links a:hover { border-color: #d6cfc2; }
-
 @media (max-width: 720px) {
   .site-footer-inner { flex-direction: column; gap: 24px; padding-top: 28px; }
   .footer-sitemap { gap: 32px; }
