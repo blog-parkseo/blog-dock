@@ -46,7 +46,7 @@ h4 { margin: 0 0 10px; font-size: .85rem; color: var(--muted); font-weight: 600;
 .nav-link:hover { color: var(--ink); }
 .me { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; }
 
-main { max-width: 1120px; margin: 0 auto; padding: 28px 20px 80px; }
+main { max-width: 1120px; margin: 0 auto; padding: 28px 20px 48px; }
 
 /* 버튼·입력 */
 button, .button {
@@ -405,3 +405,29 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
 .category-theme { width: auto; padding: 4px 8px; font-size: 13px; }
 .notification-side.reserve { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .notification-side.reserve small { font-size: 12px; color: var(--muted); }
+
+/* 푸터: 사이트맵 + 푸터 메뉴 (모든 화면 맨 아래) */
+.site-footer { border-top: 1px solid var(--line); background: var(--surface-soft); color: var(--muted); font-size: 14px; }
+.site-footer-inner { max-width: 1120px; margin: 0 auto; padding: 36px 20px 24px; display: flex; gap: 40px; justify-content: space-between; flex-wrap: wrap; }
+.footer-brand .logo { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 700; font-size: 17px; }
+.footer-brand p { margin: 8px 0 0; }
+.footer-sitemap { display: flex; gap: 56px; flex-wrap: wrap; }
+.footer-sitemap div { display: flex; flex-direction: column; gap: 8px; min-width: 90px; }
+.footer-sitemap h4 { margin: 0 0 4px; color: var(--ink); }
+.footer-sitemap a, .footer-menu a { color: var(--muted); }
+.footer-sitemap a:hover, .footer-menu a:hover, .footer-menu button:hover { color: var(--ink); }
+.footer-bottom { max-width: 1120px; margin: 0 auto; padding: 16px 20px 28px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.footer-bottom p { margin: 0; font-size: 13px; }
+.footer-menu { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+.footer-menu button { color: var(--muted); font-size: 14px; padding: 0; }
+
+/* 블로그 사이트맵 (블로그 화면 아래쪽) */
+.blog-sitemap { margin: 40px 0 0; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.blog-sitemap-links { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+.blog-sitemap-links a { padding: 5px 12px; border-radius: 999px; background: var(--surface-soft); border: 1px solid var(--line); color: var(--ink); font-size: 14px; }
+.blog-sitemap-links a:hover { border-color: #d6cfc2; }
+
+@media (max-width: 720px) {
+  .site-footer-inner { flex-direction: column; gap: 24px; padding-top: 28px; }
+  .footer-sitemap { gap: 32px; }
+}

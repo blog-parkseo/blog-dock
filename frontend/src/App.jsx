@@ -22,6 +22,7 @@ import ManagePage from './pages/ManagePage'
 import SettingsPage from './pages/SettingsPage'
 import AdminPage from './pages/AdminPage'
 import NotificationsPage from './pages/NotificationsPage'
+import SiteFooter from './components/SiteFooter'
 
 // 에디터가 커서 글쓰기 화면에 들어갈 때만 불러온다
 const WritePage = lazy(() => import('./pages/WritePage'))
@@ -120,6 +121,7 @@ export default function App() {
         )}
         </Suspense>
       </main>
+      <SiteFooter />
     </>
   )
 }

@@ -76,7 +76,24 @@ export default function BlogLayout({ address: hostAddress }) {
           </div>
         </aside>
       </div>
+      <BlogSitemap />
     </BlogContext.Provider>
+  )
+}
+
+// 블로그 아래쪽 사이트맵: 이 블로그의 홈, 카테고리, 태그로 바로 간다
+function BlogSitemap() {
+  const { blog, sidebar, link } = useBlog()
+  return (
+    <nav className="blog-sitemap" aria-label={`${blog.name} 사이트맵`}>
+      <h4>{blog.name} 사이트맵</h4>
+      <div className="blog-sitemap-links">
+        <SmartLink to={link('')}>블로그 홈</SmartLink>
+        {sidebar.categories.map((c) => <SmartLink key={c.id} to={link(`category/${c.id}`)}>{c.name}</SmartLink>)}
+        {sidebar.uncategorizedCount > 0 && <SmartLink to={link('category/none')}>미분류</SmartLink>}
+        <SmartLink to={link('tags')}>태그</SmartLink>
+      </div>
+    </nav>
   )
 }
 
