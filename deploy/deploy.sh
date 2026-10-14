@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# 서버에서 블로그를 도커로 (다시) 띄우는 스크립트.
+# 서버에서 블로그를 도커로 (다시) 띄우는 스크립트. 롤링 배포를 한다.
+# 블로그를 두 개(APP_PORT, APP_PORT_2) 띄워 두고 하나씩 새 버전으로 바꾼다.
+# 하나를 바꾸는 동안 다른 하나가 손님을 받아서 사이트가 끊기지 않는다 (nginx가 두 포트를 다 가리킬 때).
 # GitHub Actions가 도커 이미지(seohyun-blog.tar.gz)와 이 파일을 ~/blog-dock 에 올린 뒤 실행한다.
 # 손으로 다시 띄울 때: cd ~/blog-dock && ./deploy.sh
 set -euo pipefail
 
 APP_DIR="$HOME/blog-dock"
 IMAGE=seohyun-blog:latest
-CONTAINER=seohyun-blog
+CONTAINER=seohyun-blog      # 1번 블로그 (APP_PORT)
+CONTAINER_2=seohyun-blog-2  # 2번 블로그 (APP_PORT_2)
 cd "$APP_DIR"
 mkdir -p uploads logs
 
@@ -24,6 +27,7 @@ if [ -n "${DB_ADDRESS:-}" ]; then
       echo "SPRING_PROFILES_ACTIVE=prod"
     fi
     echo "APP_PORT=${APP_PORT:-8080}"
+    echo "APP_PORT_2=${APP_PORT_2:-$(( ${APP_PORT:-8080} + 1 ))}"
     echo "DB_ADDRESS=$DB_ADDRESS"
     echo "DB_PORT=${DB_PORT:-3306}"
     echo "DB_NAME=$DB_NAME"
@@ -40,6 +44,8 @@ if [ ! -f app.env ]; then
   exit 1
 fi
 APP_PORT=$(grep '^APP_PORT=' app.env | cut -d= -f2-)
+APP_PORT_2=$(grep '^APP_PORT_2=' app.env | cut -d= -f2- || true)
+APP_PORT_2=${APP_PORT_2:-$((APP_PORT + 1))}
 
 # 예전에 java로 직접 띄운 블로그가 있으면 끈다 (도커로 옮기기 전 방식)
 if [ -f app.pid ]; then
@@ -62,7 +68,7 @@ if [ -f seohyun-blog.tar.gz ]; then
   echo "도커 이미지 불러오는 중"
   gunzip -c seohyun-blog.tar.gz | docker load
 fi
-docker rm -f "$CONTAINER" blog-dock > /dev/null 2>&1 || true  # blog-dock: 이름 바꾸기 전 컨테이너
+docker rm -f blog-dock > /dev/null 2>&1 || true  # 이름 바꾸기 전 컨테이너
 
 # 다른 학생들 블로그처럼 -p 포트:8080 으로 열어야 학교 안 다른 컴퓨터에서 들어올 수 있다.
 # 그런데 컨테이너 네트워크에서 데이터베이스까지 길이 없으면(No route to host) 블로그가 켜지지 않는다.
@@ -87,34 +93,59 @@ if ! docker network inspect "$NET" > /dev/null 2>&1; then
 fi
 
 if docker network inspect "$NET" > /dev/null 2>&1 && can_reach_db "$NET"; then
-  echo "$NET 에서 데이터베이스 연결 확인 → -p ${APP_PORT}:8080 으로 엽니다"
-  NETWORK_ARGS=(--network "$NET" -p "${APP_PORT}:8080")
+  echo "$NET 에서 데이터베이스 연결 확인 → -p 포트:8080 으로 엽니다"
+  NETWORK_MODE=net
 elif can_reach_db bridge; then
-  echo "기본 네트워크에서 데이터베이스 연결 확인 → -p ${APP_PORT}:8080 으로 엽니다"
-  NETWORK_ARGS=(-p "${APP_PORT}:8080")
+  echo "기본 네트워크에서 데이터베이스 연결 확인 → -p 포트:8080 으로 엽니다"
+  NETWORK_MODE=bridge
 else
   echo "컨테이너 네트워크에서는 데이터베이스에 닿지 않아요 → 서버 네트워크를 같이 씁니다 (학교 안에서 접속이 막힐 수 있어요)"
-  NETWORK_ARGS=(--network host -e SERVER_PORT="$APP_PORT")
+  NETWORK_MODE=host
 fi
-docker run -d --name "$CONTAINER" --restart unless-stopped \
-  --user "$(id -u):$(id -g)" \
-  "${NETWORK_ARGS[@]}" \
-  --env-file app.env \
-  -v "$APP_DIR/uploads:/app/uploads" \
-  "$IMAGE" > /dev/null
+
+# 블로그 하나를 새 버전으로 바꾸고, 켜질 때까지 기다린다. $1 = 컨테이너 이름, $2 = 포트
+replace_blog() {
+  local name=$1 port=$2
+  local network_args
+  case "$NETWORK_MODE" in
+    net)    network_args=(--network "$NET" -p "${port}:8080") ;;
+    bridge) network_args=(-p "${port}:8080") ;;
+    host)   network_args=(--network host -e SERVER_PORT="$port") ;;
+  esac
+
+  echo "[$name] 끄는 중 (처리 중인 요청은 마저 끝냄)"
+  docker stop -t 30 "$name" > /dev/null 2>&1 || true
+  docker rm -f "$name" > /dev/null 2>&1 || true
+
+  docker run -d --name "$name" --restart unless-stopped \
+    --user "$(id -u):$(id -g)" \
+    "${network_args[@]}" \
+    --env-file app.env \
+    -v "$APP_DIR/uploads:/app/uploads" \
+    "$IMAGE" > /dev/null
+  echo "[$name] 새 버전 시작 (포트 ${port})"
+
+  for _ in $(seq 90); do
+    if curl -fs "http://localhost:${port}/api/health" > /dev/null; then
+      echo "[$name] 켜짐: http://서버주소:${port}/"
+      return 0
+    fi
+    if [ "$(docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" != "true" ]; then break; fi
+    sleep 2
+  done
+  echo "[$name] 블로그가 켜지지 않았어요. 마지막 로그:" >&2
+  docker logs --tail 60 "$name" >&2 || true
+  return 1
+}
+
+# 롤링 배포: 2번을 먼저 바꾸고, 2번이 잘 켜지면 1번을 바꾼다.
+# 2번이 안 켜지면 여기서 멈춘다. 1번은 옛 버전 그대로라 사이트는 계속 열린다.
+if ! replace_blog "$CONTAINER_2" "$APP_PORT_2"; then
+  echo "배포 중단: 새 버전이 켜지지 않아서 1번 블로그(포트 ${APP_PORT})는 옛 버전으로 두었어요." >&2
+  exit 1
+fi
+replace_blog "$CONTAINER" "$APP_PORT"
+
 docker rmi blog-dock:latest > /dev/null 2>&1 || true; rm -f blog-dock.tar.gz  # 이름 바꾸기 전 이미지
 docker image prune -f > /dev/null 2>&1 || true
-echo "블로그 컨테이너 시작 (포트 ${APP_PORT})"
-
-# 켜질 때까지 기다렸다가 확인한다
-for _ in $(seq 90); do
-  if curl -fs "http://localhost:${APP_PORT}/api/health" > /dev/null; then
-    echo "배포 성공: http://서버주소:${APP_PORT}/"
-    exit 0
-  fi
-  if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null)" != "true" ]; then break; fi
-  sleep 2
-done
-echo "블로그가 켜지지 않았어요. 마지막 로그:" >&2
-docker logs --tail 60 "$CONTAINER" >&2 || true
-exit 1
+echo "배포 성공: 블로그 두 개(포트 ${APP_PORT}, ${APP_PORT_2})가 새 버전이에요."

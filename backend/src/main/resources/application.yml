@@ -17,12 +17,21 @@ spring:
       max-request-size: 11MB
   jackson:
     time-zone: UTC
+  # 로그인 세션을 DB(SPRING_SESSION 표, V10)에 저장한다. 블로그를 두 개 띄워도(롤링 배포) 로그인이 유지된다
+  session:
+    jdbc:
+      initialize-schema: never
+  lifecycle:
+    # 끌 때 처리 중이던 요청은 마저 끝내고 끈다 (최대 20초)
+    timeout-per-shutdown-phase: 20s
 
 server:
+  shutdown: graceful
   servlet:
     session:
       timeout: 14d
       cookie:
+        name: JSESSIONID
         max-age: 14d
         http-only: true
         same-site: lax

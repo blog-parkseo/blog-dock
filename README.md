@@ -79,7 +79,12 @@ VITE_BLOG_DOMAIN=blogdock.localhost npm run dev
 
 ### 학교 서버에 자동 배포
 
-`.github/workflows/deploy.yml`이 main에 푸시하거나 머지할 때마다 화면과 서버를 jar 하나로 빌드하고 `Dockerfile`로 도커 이미지를 만든다. 이미지를 학교 서버의 `~/blog-dock`에 올리고 `deploy/deploy.sh`가 SSH로 접속해 `seohyun-blog` 컨테이너를 다시 띄운다 (다른 학생들 블로그처럼 `-p APP_PORT:8080`으로 연다).
+`.github/workflows/deploy.yml`이 main에 푸시하거나 머지할 때마다 화면과 서버를 jar 하나로 빌드하고 `Dockerfile`로 도커 이미지를 만든다. 이미지를 학교 서버의 `~/blog-dock`에 올리고 `deploy/deploy.sh`가 SSH로 접속해 블로그를 롤링 배포로 바꾼다 (다른 학생들 블로그처럼 `-p 포트:8080`으로 연다).
+
+**롤링 배포**: 블로그를 두 개(`seohyun-blog`는 `APP_PORT`=8380, `seohyun-blog-2`는 `APP_PORT_2`=8381, 없으면 APP_PORT + 1) 띄워 두고, 배포할 때 2번을 먼저 새 버전으로 바꿔 켜진 걸(`/api/health`) 확인한 뒤 1번을 바꾼다. 2번이 안 켜지면 멈추고 1번은 옛 버전으로 둔다. `deploy/nginx/seohyun.java21.net.conf`가 두 포트를 번갈아 쓰고, 꺼진 쪽으로 간 요청은 다른 쪽으로 다시 보낸다. 로그인 세션은 DB(`V10__spring_session.sql`, Spring Session JDBC)에 저장해서 어느 블로그로 가도 로그인이 유지되고, 배포해도 로그아웃되지 않는다. 끌 때는 처리 중인 요청을 마저 끝낸다(`server.shutdown: graceful`).
+- 내 컴퓨터에서 도커(MySQL 8 + nginx)로 확인: 배포하는 동안 0.05초마다 요청 1,619개를 보내 실패 0개. nginx가 8380만 가리키는 예전 방식은 같은 시험에서 190개(약 15초) 실패
+- 잠깐은 옛 버전과 새 버전이 같이 돈다. DB 마이그레이션은 추가만 하고, 컬럼 삭제·이름 바꾸기는 그다음 배포에서 한다
+- 블로그가 둘이라 서버 메모리를 최대 1GB쯤 쓴다
 
 1. 저장소 Settings → Secrets and variables → Actions의 **Secrets**에 `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `SSH_ADDRESS`, `SSH_ID`, `SSH_PASSWORD`, `SSH_PORT`를 넣는다.
 2. 같은 화면의 **Variables** 탭에 블로그 포트 `APP_PORT`를 넣는다. 이 값이 없으면 배포하지 않는다.
