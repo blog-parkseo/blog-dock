@@ -68,6 +68,14 @@ public class Member {
         return m;
     }
 
+    /** 연결 해제한 소셜 계정이 가입할 때 쓴 계정이면 그 칸을 비운다. */
+    public void clearSocial(String provider) {
+        if (provider.equals(this.socialProvider)) {
+            this.socialProvider = null;
+            this.socialId = null;
+        }
+    }
+
     public void changePasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }

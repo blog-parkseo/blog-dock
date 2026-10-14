@@ -425,3 +425,17 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
   .site-footer-inner { flex-direction: column; gap: 24px; padding-top: 28px; }
   .footer-sitemap { gap: 32px; }
 }
+
+/* 회원정보 수정 > 계정 연결 */
+.social-links h2 { margin: 0 0 4px; font-size: 18px; }
+.social-links ul { list-style: none; margin: 16px 0 0; padding: 0; }
+.social-links li { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+.social-links li:last-child { border-bottom: 1px solid var(--line); }
+.social-mark { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; border: 1px solid var(--line); }
+.social-mark .mark { width: 16px; height: 16px; }
+.social-mark.kakao { background: #fee500; border-color: #fee500; color: #191919; }
+.social-mark.google { background: #fff; }
+.social-mark.github { background: #24292f; border-color: #24292f; color: #fff; }
+.social-name { flex: 1; font-weight: 600; }
+.social-state { color: var(--ok); font-size: 14px; }
+.social-links li button, .social-links li .button { padding: 7px 14px; font-size: 14px; }

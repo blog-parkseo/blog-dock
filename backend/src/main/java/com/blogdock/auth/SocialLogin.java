@@ -8,7 +8,6 @@ import java.util.Map;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -26,6 +25,7 @@ import jakarta.servlet.http.HttpSession;
 public class SocialLogin implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
 
     static final String REDIRECT_KEY = "LOGIN_REDIRECT";
+    static final String LINK_KEY = "LINK_MEMBER_ID";
 
     private final AuthService authService;
     private final LoginSession loginSession;
@@ -47,42 +47,80 @@ public class SocialLogin implements AuthenticationSuccessHandler, Authentication
         request.getSession(true).setAttribute(REDIRECT_KEY, safeRedirect(redirect));
     }
 
+    /** 계정 연결: 로그인한 회원 번호를 기억하고 소셜 로그인으로 보낸다. 돌아오면 로그인 대신 연결한다. */
+    public static void rememberLink(HttpServletRequest request, Long memberId) {
+        request.getSession(true).setAttribute(LINK_KEY, memberId);
+    }
+
     @Override
-    @SuppressWarnings("unchecked")
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        OAuth2User user = (OAuth2User) authentication.getPrincipal();
-        Map<String, Object> attrs = user.getAttributes();
-        Member member;
-        String registrationId = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
-        if ("google".equals(registrationId)) {
-            // 구글: sub(회원 번호), name(이름), picture(사진)
-            member = authService.socialLogin("GOOGLE", String.valueOf(attrs.get("sub")),
-                    (String) attrs.get("name"), (String) attrs.get("picture"));
-        } else if ("github".equals(registrationId)) {
-            // 깃허브: id(회원 번호), name(이름, 없으면 login 아이디), avatar_url(사진)
-            String name = (String) attrs.get("name");
-            member = authService.socialLogin("GITHUB", String.valueOf(attrs.get("id")),
-                    name == null || name.isBlank() ? (String) attrs.get("login") : name, (String) attrs.get("avatar_url"));
-        } else {
-            Map<String, Object> account = (Map<String, Object>) attrs.getOrDefault("kakao_account", Map.of());
-            Map<String, Object> profile = (Map<String, Object>) account.getOrDefault("profile", Map.of());
-            member = authService.socialLogin("KAKAO", String.valueOf(attrs.get("id")),
-                    (String) profile.get("nickname"), (String) profile.get("profile_image_url"));
+        SocialProfile p = profile((OAuth2AuthenticationToken) authentication);
+        Long linkingMemberId = popLink(request);
+        if (linkingMemberId != null) {
+            var result = authService.linkSocial(linkingMemberId, p.provider(), p.socialId());
+            // 소셜 로그인이 세션의 로그인 정보를 바꿔 놓았으니 연결하던 회원으로 되돌린다
+            loginSession.save(authService.member(linkingMemberId), request, response);
+            String query = switch (result) {
+                case LINKED -> "linked=" + p.provider().toLowerCase();
+                case USED_BY_OTHER -> "linkError=used";
+                case ALREADY_HAS_PROVIDER -> "linkError=already";
+            };
+            response.sendRedirect("/settings?" + query);
+            return;
         }
-
+        Member member = authService.socialLogin(p.provider(), p.socialId(), p.name(), p.imageUrl());
         String redirect = popRedirect(request);
         loginSession.save(member, request, response);
         response.sendRedirect(redirect);
     }
 
+    private record SocialProfile(String provider, String socialId, String name, String imageUrl) {
+    }
+
+    /** 회사마다 다른 사용자 정보에서 회원 번호, 이름, 사진을 꺼낸다. */
+    @SuppressWarnings("unchecked")
+    private static SocialProfile profile(OAuth2AuthenticationToken token) {
+        Map<String, Object> attrs = token.getPrincipal().getAttributes();
+        String registrationId = token.getAuthorizedClientRegistrationId();
+        if ("google".equals(registrationId)) {
+            // 구글: sub(회원 번호), name(이름), picture(사진)
+            return new SocialProfile("GOOGLE", String.valueOf(attrs.get("sub")),
+                    (String) attrs.get("name"), (String) attrs.get("picture"));
+        }
+        if ("github".equals(registrationId)) {
+            // 깃허브: id(회원 번호), name(이름, 없으면 login 아이디), avatar_url(사진)
+            String name = (String) attrs.get("name");
+            return new SocialProfile("GITHUB", String.valueOf(attrs.get("id")),
+                    name == null || name.isBlank() ? (String) attrs.get("login") : name, (String) attrs.get("avatar_url"));
+        }
+        Map<String, Object> account = (Map<String, Object>) attrs.getOrDefault("kakao_account", Map.of());
+        Map<String, Object> profile = (Map<String, Object>) account.getOrDefault("profile", Map.of());
+        return new SocialProfile("KAKAO", String.valueOf(attrs.get("id")),
+                (String) profile.get("nickname"), (String) profile.get("profile_image_url"));
+    }
+
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
+        if (popLink(request) != null) {
+            response.sendRedirect("/settings?linkError=failed");
+            return;
+        }
         String uri = request.getRequestURI();
         String provider = uri.endsWith("/google") ? "google" : uri.endsWith("/github") ? "github" : "kakao";
         String redirect = popRedirect(request);
         response.sendRedirect("/login?error=" + provider + "&redirect=" + URLEncoder.encode(redirect, StandardCharsets.UTF_8));
+    }
+
+    private Long popLink(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return null;
+        }
+        Object value = session.getAttribute(LINK_KEY);
+        session.removeAttribute(LINK_KEY);
+        return (Long) value;
     }
 
     private String popRedirect(HttpServletRequest request) {

@@ -1,5 +1,6 @@
 package com.blogdock.auth;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -7,8 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -92,6 +95,20 @@ public class AuthController {
     private boolean hasSocial(String registrationId) {
         ClientRegistrationRepository clients = socialClients.getIfAvailable();
         return clients != null && clients.findByRegistrationId(registrationId) != null;
+    }
+
+    /** 계정 연결: 내 회원에 연결된 소셜 계정들. */
+    @GetMapping("/api/me/socials")
+    public List<AuthService.SocialAccount> socials(@AuthenticationPrincipal LoginMember login) {
+        return authService.socials(LoginMember.require(login));
+    }
+
+    /** 계정 연결 해제. 마지막 로그인 방법이면 409. */
+    @DeleteMapping("/api/me/socials/{provider:kakao|google|github}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unlink(@AuthenticationPrincipal LoginMember login,
+                       @PathVariable String provider) {
+        authService.unlinkSocial(LoginMember.require(login), provider);
     }
 
     /** 지금 로그인한 사람. 비회원이면 SecurityConfig가 401을 돌려준다. */
