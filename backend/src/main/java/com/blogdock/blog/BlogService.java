@@ -48,6 +48,7 @@ public class BlogService {
             throw ApiException.invalid("address", messageOf(problem));
         }
         Blog blog = blogRepository.save(Blog.open(memberId, address, req.name().trim(), blankToNull(req.description())));
+        subscriptionService.fulfillReservations(blog);
         return BlogResponse.of(blog, memberId, subscriptionService.status(blog, memberId));
     }
 

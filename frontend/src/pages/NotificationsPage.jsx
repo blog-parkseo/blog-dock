@@ -5,14 +5,29 @@ import { blogLink } from '../blogUrl'
 import { formatDateTime } from '../format'
 import { NOTIFICATIONS_CHANGED } from '../components/NotificationBell'
 
-const ICON = { COMMENT: '💬', LIKE: '♥', SUBSCRIBE: '➕', NEW_POST: '📝' }
+const ICON = { COMMENT: '💬', LIKE: '♥', SUBSCRIBE: '➕', NEW_POST: '📝', MUTUAL: '🤝' }
 const changed = () => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED))
 
-// SUB-05 구독 알림 옆 맞구독 버튼. 맞구독은 서로 블로그가 있어야 해서, 상대 블로그가 없으면 안내만 한다
+// SUB-05 구독 알림 옆 맞구독 버튼. 상대 블로그가 아직 없으면 예약 맞구독(SUB-07)
 function SubscribeBack({ n, onClick }) {
-  if (!n.address) return <span className="notification-side hint">블로그가 아직 없어서 맞구독할 수 없어요</span>
-  if (n.subscribed) return <button className="notification-side subscribe subscribed mutual" disabled>✓ 맞구독중</button>
-  return <button className="notification-side subscribe primary" onClick={onClick}>+ 맞구독하기</button>
+  if (n.address) {
+    if (n.subscribed) return <button className="notification-side subscribe subscribed mutual" disabled>✓ 맞구독중</button>
+    return <button className="notification-side subscribe primary" onClick={() => onClick(false)}>+ 맞구독하기</button>
+  }
+  if (n.reserved) {
+    return (
+      <span className="notification-side reserve">
+        <button className="subscribe subscribed" onClick={() => onClick(true)} title="누르면 예약을 취소해요">✓ 맞구독 예약됨</button>
+        <small>블로그를 만들면 자동으로 구독돼요</small>
+      </span>
+    )
+  }
+  return (
+    <span className="notification-side reserve">
+      <button className="subscribe primary" onClick={() => onClick(false)}>+ 맞구독 예약</button>
+      <small>아직 블로그가 없어요</small>
+    </span>
+  )
 }
 
 // NOTI-02 알림 화면. 최신순, 더보기는 커서 방식
@@ -49,11 +64,11 @@ export default function NotificationsPage() {
     else navigate(to.href)
   }
 
-  // 구독 알림에서 바로 맞구독. 알림도 읽음으로 바꾼다
-  const subscribeBack = async (n) => {
+  // 구독 알림에서 바로 맞구독. 상대 블로그가 없으면 예약해 두고, 상대가 블로그를 만들 때 자동으로 구독된다 (SUB-07)
+  const subscribeBack = async (n, cancel = false) => {
+    if (cancel && !window.confirm('맞구독 예약을 취소할까요?')) return
     try {
-      await api('POST', `/api/blogs/${n.address}/subscription`)
-      const r = await api('POST', `/api/notifications/${n.id}/read`)
+      const r = await api(cancel ? 'DELETE' : 'POST', `/api/notifications/${n.id}/subscribe-back`)
       setItems((prev) => prev.map((x) => (x.id === n.id ? r : x)))
       changed()
     } catch (err) {
@@ -89,7 +104,7 @@ export default function NotificationsPage() {
                 </span>
                 {!n.read && <span className="unread-dot" aria-label="읽지 않음" />}
               </button>
-              {n.type === 'SUBSCRIBE' && <SubscribeBack n={n} onClick={() => subscribeBack(n)} />}
+              {n.type === 'SUBSCRIBE' && <SubscribeBack n={n} onClick={(cancel) => subscribeBack(n, cancel)} />}
             </li>
           ))}
         </ul>

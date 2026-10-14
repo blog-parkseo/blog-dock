@@ -13,6 +13,7 @@ import com.blogdock.blog.BlogAccess;
 import com.blogdock.blog.BlogRepository;
 import com.blogdock.common.ApiException;
 import com.blogdock.notification.NotificationEvents.BlogSubscribed;
+import com.blogdock.notification.NotificationEvents.ReservationFulfilled;
 
 /** SUB-01 구독·해제. 누르면 구독, 다시 누르면 해제. 구독자 수는 저장하지 않고 매번 센다. */
 @Service
@@ -21,14 +22,62 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final BlogAccess blogAccess;
     private final BlogRepository blogRepository;
+    private final SubscriptionReservationRepository reservationRepository;
     private final ApplicationEventPublisher events;
 
     public SubscriptionService(SubscriptionRepository subscriptionRepository, BlogAccess blogAccess,
-                               BlogRepository blogRepository, ApplicationEventPublisher events) {
+                               BlogRepository blogRepository, SubscriptionReservationRepository reservationRepository,
+                               ApplicationEventPublisher events) {
         this.subscriptionRepository = subscriptionRepository;
         this.blogAccess = blogAccess;
         this.blogRepository = blogRepository;
+        this.reservationRepository = reservationRepository;
         this.events = events;
+    }
+
+    /**
+     * SUB-07 예약 맞구독. 상대가 이미 블로그가 있으면 바로 구독한다.
+     * 돌려주는 값: true면 예약됨, false면 바로 구독됨.
+     */
+    @Transactional
+    public boolean reserve(Long memberId, Long targetMemberId) {
+        if (memberId.equals(targetMemberId)) {
+            throw ApiException.badRequest("OWN_BLOG", "내 블로그는 구독할 수 없어요");
+        }
+        Blog blog = blogRepository.findByOwnerId(targetMemberId).orElse(null);
+        if (blog != null) {
+            subscribe(blog.getAddress(), memberId);
+            return false;
+        }
+        if (!reservationRepository.existsById(new SubscriptionReservation.Key(memberId, targetMemberId))) {
+            reservationRepository.save(new SubscriptionReservation(memberId, targetMemberId));
+        }
+        return true;
+    }
+
+    @Transactional
+    public void cancelReservation(Long memberId, Long targetMemberId) {
+        reservationRepository.deleteById(new SubscriptionReservation.Key(memberId, targetMemberId));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isReserved(Long memberId, Long targetMemberId) {
+        return reservationRepository.existsById(new SubscriptionReservation.Key(memberId, targetMemberId));
+    }
+
+    /** 블로그를 새로 만들면 이 사람에게 걸린 예약을 모두 구독으로 바꾼다 (블로그 만들기와 같은 트랜잭션). */
+    @Transactional
+    public void fulfillReservations(Blog blog) {
+        List<SubscriptionReservation> reservations = reservationRepository.findByTargetMemberId(blog.getOwnerId());
+        for (SubscriptionReservation r : reservations) {
+            Long userId = r.getUserId();
+            if (!subscriptionRepository.existsById(new Subscription.Key(userId, blog.getId()))) {
+                subscriptionRepository.save(new Subscription(userId, blog.getId()));
+                events.publishEvent(new BlogSubscribed(blog.getId(), userId));
+                events.publishEvent(new ReservationFulfilled(blog.getId(), userId));
+            }
+        }
+        reservationRepository.deleteAll(reservations);
     }
 
     @Transactional

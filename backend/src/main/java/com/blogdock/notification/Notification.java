@@ -18,6 +18,7 @@ public class Notification {
     public static final String LIKE = "LIKE";
     public static final String SUBSCRIBE = "SUBSCRIBE";
     public static final String NEW_POST = "NEW_POST";
+    public static final String MUTUAL = "MUTUAL";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -28,11 +28,14 @@ import com.blogdock.notification.NotificationEvents.BlogSubscribed;
 import com.blogdock.notification.NotificationEvents.CommentWritten;
 import com.blogdock.notification.NotificationEvents.PostLiked;
 import com.blogdock.notification.NotificationEvents.PostPublished;
+import com.blogdock.notification.NotificationEvents.ReservationFulfilled;
 import com.blogdock.post.Post;
 import com.blogdock.post.PostRepository;
 import com.blogdock.post.PostService;
 import com.blogdock.subscription.Subscription;
 import com.blogdock.subscription.SubscriptionRepository;
+import com.blogdock.subscription.SubscriptionReservation;
+import com.blogdock.subscription.SubscriptionReservationRepository;
 
 /** NOTI-01 알림 만들기, NOTI-02 알림 목록·읽음, NOTI-03 오래된 알림 지우기. */
 @Service
@@ -48,16 +51,19 @@ public class NotificationService {
     private final BlogRepository blogRepository;
     private final MemberRepository memberRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionReservationRepository reservationRepository;
     private final BlogAccess blogAccess;
 
     public NotificationService(NotificationRepository notificationRepository, PostRepository postRepository,
                                BlogRepository blogRepository, MemberRepository memberRepository,
-                               SubscriptionRepository subscriptionRepository, BlogAccess blogAccess) {
+                               SubscriptionRepository subscriptionRepository,
+                               SubscriptionReservationRepository reservationRepository, BlogAccess blogAccess) {
         this.notificationRepository = notificationRepository;
         this.postRepository = postRepository;
         this.blogRepository = blogRepository;
         this.memberRepository = memberRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.reservationRepository = reservationRepository;
         this.blogAccess = blogAccess;
     }
 
@@ -84,6 +90,15 @@ public class NotificationService {
                         blog.getId(), null, nickname(e.actorId()), blog.getName(), null));
             }
         }));
+    }
+
+    /** SUB-07 예약한 사람에게: 상대가 블로그를 만들어서 맞구독이 됐다. */
+    @TransactionalEventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void on(ReservationFulfilled e) {
+        safely(() -> blogRepository.findById(e.blogId()).ifPresent(blog ->
+                notificationRepository.save(Notification.of(e.userId(), blog.getOwnerId(), Notification.MUTUAL,
+                        blog.getId(), null, nickname(blog.getOwnerId()), blog.getName(), null))));
     }
 
     /** 새 글은 그 블로그의 구독자 모두에게. 구독자 공개 글도 구독자에게만 가므로 보낸다. */
@@ -169,6 +184,16 @@ public class NotificationService {
         return items(memberId, List.of(n)).get(0);
     }
 
+    /** SUB-07 구독 알림을 보낸 사람을 찾는다 (예약 맞구독용). 내 구독 알림이 아니면 404. */
+    @Transactional(readOnly = true)
+    public Long subscriberOf(Long notificationId, Long memberId) {
+        return notificationRepository.findById(notificationId)
+                .filter(x -> x.getRecipientId().equals(memberId) && Notification.SUBSCRIBE.equals(x.getType())
+                        && x.getActorId() != null)
+                .map(Notification::getActorId)
+                .orElseThrow(() -> ApiException.notFound("알림을 찾을 수 없어요"));
+    }
+
     @Transactional
     public long readAll(Long memberId) {
         return notificationRepository.readAll(memberId, Instant.now());
@@ -196,6 +221,7 @@ public class NotificationService {
             String slug = null;
             boolean available = true;
             boolean subscribed = false;
+            boolean reserved = false;
             if (n.getPostId() != null) {
                 Post post = posts.get(n.getPostId());
                 Blog blog = post == null ? null : blogs.get(post.getBlogId());
@@ -211,10 +237,17 @@ public class NotificationService {
                 if (actorBlog != null) {
                     address = actorBlog.getAddress();
                     subscribed = subscriptionRepository.existsById(new Subscription.Key(memberId, actorBlog.getId()));
+                } else {
+                    reserved = reservationRepository.existsById(
+                            new SubscriptionReservation.Key(memberId, n.getActorId()));
                 }
+            } else if (Notification.MUTUAL.equals(n.getType()) && n.getBlogId() != null) {
+                Blog blog = blogs.get(n.getBlogId());
+                available = blog != null;
+                address = blog == null ? null : blog.getAddress();
             }
             return new NotificationItem(n.getId(), n.getType(), message(n), address, slug, available,
-                    n.getReadAt() != null, n.getCreatedAt(), subscribed);
+                    n.getReadAt() != null, n.getCreatedAt(), subscribed, reserved);
         }).toList();
     }
 
@@ -223,6 +256,7 @@ public class NotificationService {
             case Notification.COMMENT -> n.getActorName() + "님이 “" + n.getPostTitle() + "”에 댓글을 남겼어요";
             case Notification.LIKE -> n.getActorName() + "님이 “" + n.getPostTitle() + "”에 공감했어요";
             case Notification.SUBSCRIBE -> n.getActorName() + "님이 내 블로그를 구독했어요";
+            case Notification.MUTUAL -> n.getActorName() + "님이 블로그를 만들어서 맞구독이 됐어요";
             default -> n.getBlogName() + "에 새 글 “" + n.getPostTitle() + "”이 올라왔어요";
         };
     }
@@ -236,9 +270,11 @@ public class NotificationService {
     /**
      * address·slug: 누르면 갈 곳 (slug가 없으면 블로그, 둘 다 없으면 이동 없음). available=false면 볼 수 없는 글.
      * subscribed: 구독 알림에서 내가 그 사람 블로그를 이미 구독했는지 (맞구독 버튼 상태). 블로그가 없으면 address가 null.
+     * reserved: 구독 알림에서 블로그가 없는 그 사람에게 맞구독을 예약해 뒀는지 (SUB-07).
      */
     public record NotificationItem(Long id, String type, String message, String address, String slug,
-                                   boolean available, boolean read, Instant createdAt, boolean subscribed) {
+                                   boolean available, boolean read, Instant createdAt, boolean subscribed,
+                                   boolean reserved) {
     }
 
     public record NotificationPage(List<NotificationItem> items, String nextCursor) {
