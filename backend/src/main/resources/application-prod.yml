@@ -11,6 +11,9 @@ spring:
       enabled: false
 
 server:
+  # nginx 뒤에서 돈다. nginx가 보내는 X-Forwarded-Proto(https)를 믿어서
+  # 카카오 로그인 Redirect URI 같은 주소를 https://seohyun.java21.net/... 으로 만든다
+  forward-headers-strategy: native
   servlet:
     session:
       cookie:
