@@ -94,8 +94,8 @@ export default function PostPage() {
         <SubscribeButton blog={blog} address={address} onChange={setSubscription} />
       </section>
       <nav className="neighbors">
-        {post.prev ? <SmartLink to={link(post.prev.slug)} className="neighbor"><small>← 이전 글</small><span>{post.prev.title}</span></SmartLink> : <span />}
-        {post.next ? <SmartLink to={link(post.next.slug)} className="neighbor next"><small>다음 글 →</small><span>{post.next.title}</span></SmartLink> : <span />}
+        {post.prev ? <Neighbor post={post.prev} to={link(post.prev.slug)} label="← 이전 글" /> : <span />}
+        {post.next ? <Neighbor post={post.next} to={link(post.next.slug)} label="다음 글 →" /> : <span />}
       </nav>
       <Comments postId={post.id} onCount={(n) => setPost((p) => ({ ...p, commentCount: n }))} count={post.commentCount} />
     </article>
@@ -304,5 +304,43 @@ function CommentItem({ comment, onChanged }) {
       )}
       </div>
     </li>
+  )
+}
+
+// 이전·다음 글 칸: 제목(두 줄까지) + 공감·댓글 수·날짜, 오른쪽에 썸네일
+function Neighbor({ post, to, label }) {
+  return (
+    <SmartLink to={to} className="neighbor">
+      <div className="neighbor-text">
+        <small>{label}</small>
+        <span className="neighbor-title">{post.title}</span>
+        <p className="neighbor-meta">
+          <span aria-label={`공감 ${post.likeCount}`}><HeartIcon />{post.likeCount}</span>
+          <span aria-label={`댓글 ${post.commentCount}`}><CommentIcon />{post.commentCount}</span>
+          <time>{dotDate(post.publishedAt)}</time>
+        </p>
+      </div>
+      {post.thumbnailUrl && <img className="neighbor-thumb" src={post.thumbnailUrl} alt="" loading="lazy" />}
+    </SmartLink>
+  )
+}
+
+// 2026. 08. 28. → 2026.08.28
+const dotDate = (iso) => formatDate(iso).replace(/\.\s*/g, '.').replace(/\.$/, '')
+
+function HeartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 20.5s-7.5-4.6-9.3-9.4C1.6 8.2 3.5 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.7 0 5.6 3.7 4.5 6.6-1.8 4.8-9.3 9.4-9.3 9.4z" />
+    </svg>
+  )
+}
+
+function CommentIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 5.5h16v10.5H10l-4 3.5V16H4z" />
+      <path d="M8.5 11h.01M12 11h.01M15.5 11h.01" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
   )
 }

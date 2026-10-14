@@ -203,10 +203,10 @@ public class PostService {
         PageRequest one = PageRequest.of(0, 1);
         Neighbor prev = postRepository.findOlder(blog.getId(), owner, subscriber, post.getPublishedAt(),
                         post.getId(), one)
-                .stream().findFirst().map(PostService::neighbor).orElse(null);
+                .stream().findFirst().map(this::neighbor).orElse(null);
         Neighbor next = postRepository.findNewer(blog.getId(), owner, subscriber, post.getPublishedAt(),
                         post.getId(), one)
-                .stream().findFirst().map(PostService::neighbor).orElse(null);
+                .stream().findFirst().map(this::neighbor).orElse(null);
         boolean liked = viewerId != null && likeRepository.existsById(new PostLike.Key(viewerId, post.getId()));
         return new PostDetail(post.getId(), post.getSlug(), post.getTitle(), post.getContentHtml(),
                 post.getVisibility(), post.getPublishedAt(), post.getUpdatedAt(), categoryRef(post.getCategoryId()),
@@ -438,8 +438,10 @@ public class PostService {
         return postRepository.findById(postId).orElseThrow(PostService::postNotFound);
     }
 
-    private static Neighbor neighbor(Post p) {
-        return new Neighbor(p.getSlug(), p.getTitle());
+    /** 이전·다음 글 칸: 제목, 썸네일, 공감·댓글 수, 날짜 */
+    private Neighbor neighbor(Post p) {
+        return new Neighbor(p.getSlug(), p.getTitle(), p.getThumbnailUrl(), p.getPublishedAt(),
+                likeRepository.countByPostId(p.getId()), commentRepository.countByPostId(p.getId()));
     }
 
     private static ApiException postNotFound() {

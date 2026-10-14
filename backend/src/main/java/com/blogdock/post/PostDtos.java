@@ -39,7 +39,8 @@ public final class PostDtos {
     public record BlogRef(String address, String name) {
     }
 
-    public record Neighbor(String slug, String title) {
+    public record Neighbor(String slug, String title, String thumbnailUrl, Instant publishedAt, long likeCount,
+                           long commentCount) {
     }
 
     /** 목록 한 줄 (BLOG-03, CAT-02, TAG-02, SRCH-01, HOME-01, MNG-01). */
