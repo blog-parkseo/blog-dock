@@ -353,6 +353,32 @@ class FeaturesTest {
         mvc.perform(get(url)).andExpect(jsonPath("$", hasSize(0)));
     }
 
+    /** 비밀 댓글: 글 주인과 쓴 사람만 내용·닉네임을 보고, 다른 사람·비회원은 가려진 채로 개수만 센다. */
+    @Test
+    void secret_comment_only_owner_and_writer_see_it() throws Exception {
+        MockHttpSession owner = blogOwner("sec-owner", "sec-blog");
+        long postId = publish(owner, "비밀 댓글 받을 글");
+        String url = "/api/posts/" + postId + "/comments";
+        MockHttpSession a = login("sec-a");
+        MockHttpSession b = login("sec-b");
+        long id = read(send(post(url), a, Map.of("content", "몰래 남김", "secret", true))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.secret").value(true))).get("id").asLong();
+
+        mvc.perform(get(url).session(a)).andExpect(jsonPath("$[0].content").value("몰래 남김"))
+                .andExpect(jsonPath("$[0].secret").value(true)).andExpect(jsonPath("$[0].canEdit").value(true));
+        mvc.perform(get(url).session(owner)).andExpect(jsonPath("$[0].content").value("몰래 남김"))
+                .andExpect(jsonPath("$[0].nickname").value("sec-a")).andExpect(jsonPath("$[0].canDelete").value(true));
+        mvc.perform(get(url).session(b)).andExpect(jsonPath("$[0].content").doesNotExist())
+                .andExpect(jsonPath("$[0].nickname").doesNotExist()).andExpect(jsonPath("$[0].secret").value(true))
+                .andExpect(jsonPath("$[0].canDelete").value(false));
+        mvc.perform(get(url)).andExpect(jsonPath("$[0].content").doesNotExist());
+
+        // 수정할 때 secret을 안 보내면 비밀 그대로, false를 보내면 공개로 바뀐다
+        send(patch("/api/comments/" + id), a, Map.of("content", "고침")).andExpect(jsonPath("$.secret").value(true));
+        send(patch("/api/comments/" + id), a, Map.of("content", "공개로", "secret", false)).andExpect(jsonPath("$.secret").value(false));
+        mvc.perform(get(url).session(b)).andExpect(jsonPath("$[0].content").value("공개로"));
+    }
+
     @Test
     void likes_soc01_and_delete_cascade_post03() throws Exception {
         MockHttpSession owner = blogOwner("like-owner", "like-blog");

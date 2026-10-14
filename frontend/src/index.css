@@ -267,7 +267,11 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
 .comment-body { white-space: pre-wrap; margin: 4px 0 0; }
 .comment .actions { margin: 6px 0 0; gap: 6px; }
 .comments form textarea { border-radius: 12px; }
-.comments form p { display: flex; justify-content: flex-end; margin: 10px 0 0; }
+.comments form p { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin: 10px 0 0; }
+.secret-check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); cursor: pointer; margin: 0; font-weight: 400; }
+.secret-check input { width: auto; margin: 0; }
+.secret-badge { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--surface-soft); color: var(--muted); font-size: 12px; font-weight: 500; }
+.secret-hidden .comment-body { color: var(--muted); font-style: italic; }
 .comment-login { padding: 18px; text-align: center; background: var(--surface-soft); border-radius: 12px; color: var(--muted); }
 .comment-login a { color: var(--accent-strong); font-weight: 600; text-decoration: underline; }
 

@@ -174,12 +174,13 @@ function ShareButton({ url }) {
   return <button className="pill" onClick={copy}>{done ? '✓ 주소를 복사했어요' : '🔗 공유 (주소 복사)'}</button>
 }
 
-// CMT-01~03 댓글
+// CMT-01~03 댓글 + 비밀 댓글 (글 주인과 쓴 사람만 봄)
 function Comments({ postId, count, onCount }) {
   const { me } = useAuth()
   const loginHref = useLoginHref()
   const [items, setItems] = useState([])
   const [text, setText] = useState('')
+  const [secret, setSecret] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const keyRef = useRef(newRequestKey())
@@ -201,9 +202,10 @@ function Comments({ postId, count, onCount }) {
     setError('')
     try {
       // 등록을 연달아 눌러도 같은 요청 키라 한 번만 등록된다
-      await api('POST', `/api/posts/${postId}/comments`, { content: text }, { headers: { 'Idempotency-Key': keyRef.current } })
+      await api('POST', `/api/posts/${postId}/comments`, { content: text, secret }, { headers: { 'Idempotency-Key': keyRef.current } })
       keyRef.current = newRequestKey()
       setText('')
+      setSecret(false)
       await load()
     } catch (err) {
       setError(fieldErrors(err).content ?? err.message)
@@ -225,7 +227,12 @@ function Comments({ postId, count, onCount }) {
           <textarea id="comment" rows={3} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)}
             placeholder="댓글을 남겨 보세요 (1000자 이하)" />
           {error && <div className="error">{error}</div>}
-          <p><button type="submit" className="primary" disabled={busy}>{busy ? '등록 중…' : '등록'}</button></p>
+          <p>
+            <label className="secret-check">
+              <input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} /> 🔒 비밀 댓글
+            </label>
+            <button type="submit" className="primary" disabled={busy}>{busy ? '등록 중…' : '등록'}</button>
+          </p>
         </form>
       ) : (
         <p className="comment-login"><SmartLink to={loginHref}>로그인</SmartLink>하고 댓글을 남겨 보세요.</p>
@@ -237,11 +244,12 @@ function Comments({ postId, count, onCount }) {
 function CommentItem({ comment, onChanged }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(comment.content)
+  const [secret, setSecret] = useState(comment.secret)
   const [error, setError] = useState('')
 
   const save = async () => {
     try {
-      await api('PATCH', `/api/comments/${comment.id}`, { content: text })
+      await api('PATCH', `/api/comments/${comment.id}`, { content: text, secret })
       setEditing(false)
       onChanged()
     } catch (err) {
@@ -258,16 +266,32 @@ function CommentItem({ comment, onChanged }) {
     }
   }
 
+  // 비밀 댓글인데 내용을 못 받으면 글 주인·쓴 사람이 아니라서 가려진 것
+  if (comment.secret && comment.content == null) {
+    return (
+      <li className="comment secret-hidden">
+        <Avatar name="🔒" size={36} />
+        <div className="comment-main">
+          <p className="comment-head"><strong>비밀 댓글</strong> <time>{formatDateTime(comment.createdAt)}</time></p>
+          <p className="comment-body">글쓴이만 볼 수 있는 댓글이에요.</p>
+        </div>
+      </li>
+    )
+  }
+
   return (
     <li className="comment">
       <Avatar name={comment.nickname} src={comment.profileImageUrl} size={36} />
       <div className="comment-main">
-      <p className="comment-head"><strong>{comment.nickname}</strong> <time>{formatDateTime(comment.createdAt)}</time></p>
+      <p className="comment-head"><strong>{comment.nickname}</strong>{comment.secret && <span className="secret-badge">🔒 비밀</span>} <time>{formatDateTime(comment.createdAt)}</time></p>
       {editing ? (
         <>
           <textarea rows={3} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} aria-label="댓글 수정" />
           {error && <div className="error">{error}</div>}
-          <p className="actions"><button onClick={save}>저장</button> <button className="link" onClick={() => { setEditing(false); setText(comment.content) }}>취소</button></p>
+          <p className="actions">
+            <label className="secret-check"><input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} /> 🔒 비밀 댓글</label>
+            <button onClick={save}>저장</button> <button className="link" onClick={() => { setEditing(false); setText(comment.content); setSecret(comment.secret) }}>취소</button>
+          </p>
         </>
       ) : (
         <p className="comment-body">{comment.content}</p>

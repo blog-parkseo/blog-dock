@@ -44,14 +44,14 @@ public class CommentController {
                                    @RequestHeader(value = Idempotency.HEADER, required = false) String key,
                                    @Valid @RequestBody ContentRequest req) {
         Long memberId = LoginMember.require(login);
-        return idempotency.run(memberId, key, java.util.Map.of("postId", postId, "content", req.content()),
-                HttpStatus.CREATED, () -> commentService.write(postId, memberId, req.content()));
+        return idempotency.run(memberId, key, java.util.Map.of("postId", postId, "content", req.content(), "secret", req.isSecret()),
+                HttpStatus.CREATED, () -> commentService.write(postId, memberId, req.content(), req.isSecret()));
     }
 
     @PatchMapping("/api/comments/{id}")
     public CommentResponse edit(@PathVariable Long id, @AuthenticationPrincipal LoginMember login,
                                 @Valid @RequestBody ContentRequest req) {
-        return commentService.edit(id, LoginMember.require(login), req.content());
+        return commentService.edit(id, LoginMember.require(login), req.content(), req.secret());
     }
 
     @DeleteMapping("/api/comments/{id}")
@@ -62,6 +62,12 @@ public class CommentController {
 
     public record ContentRequest(
             @NotBlank(message = "댓글을 입력해 주세요")
-            @Size(max = 1000, message = "댓글은 1000자 이하로 입력해 주세요") String content) {
+            @Size(max = 1000, message = "댓글은 1000자 이하로 입력해 주세요") String content,
+            Boolean secret) {
+
+        /** secret을 안 보내면 공개 댓글 */
+        boolean isSecret() {
+            return Boolean.TRUE.equals(secret);
+        }
     }
 }

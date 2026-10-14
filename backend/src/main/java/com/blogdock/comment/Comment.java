@@ -26,6 +26,10 @@ public class Comment {
     @Column(nullable = false)
     private String content;
 
+    /** 비밀 댓글: 글 주인과 댓글 쓴 사람만 내용을 본다. */
+    @Column(nullable = false)
+    private boolean secret;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -35,8 +39,9 @@ public class Comment {
     protected Comment() {
     }
 
-    public static Comment write(Long postId, Long authorId, String content) {
+    public static Comment write(Long postId, Long authorId, String content, boolean secret) {
         Comment c = new Comment();
+        c.secret = secret;
         c.postId = postId;
         c.authorId = authorId;
         c.content = content;
@@ -45,8 +50,9 @@ public class Comment {
         return c;
     }
 
-    public void edit(String content) {
+    public void edit(String content, boolean secret) {
         this.content = content;
+        this.secret = secret;
         this.updatedAt = Instant.now();
     }
 
@@ -68,6 +74,10 @@ public class Comment {
 
     public String getContent() {
         return content;
+    }
+
+    public boolean isSecret() {
+        return secret;
     }
 
     public Instant getCreatedAt() {
