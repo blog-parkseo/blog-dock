@@ -72,13 +72,18 @@ public class NotificationService {
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void on(CommentWritten e) {
-        safely(() -> toPostOwner(e.postId(), e.actorId(), Notification.COMMENT));
+        Long parentAuthor = e.parentAuthorId();
+        if (parentAuthor != null && !parentAuthor.equals(e.actorId())) {
+            safely(() -> toCommenter(e.postId(), e.actorId(), parentAuthor));
+        }
+        // 글 주인이 원래 댓글을 쓴 사람이면 답글 알림 하나만 보낸다
+        safely(() -> toPostOwner(e.postId(), e.actorId(), Notification.COMMENT, parentAuthor));
     }
 
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void on(PostLiked e) {
-        safely(() -> toPostOwner(e.postId(), e.actorId(), Notification.LIKE));
+        safely(() -> toPostOwner(e.postId(), e.actorId(), Notification.LIKE, null));
     }
 
     @TransactionalEventListener
@@ -119,15 +124,24 @@ public class NotificationService {
         }));
     }
 
-    private void toPostOwner(Long postId, Long actorId, String type) {
+    /** 내 댓글에 답글이 달렸다. */
+    private void toCommenter(Long postId, Long actorId, Long commenterId) {
+        postRepository.findById(postId).ifPresent(post -> {
+            Blog blog = blogAccess.find(post.getBlogId());
+            notificationRepository.save(Notification.of(commenterId, actorId, Notification.REPLY, blog.getId(),
+                    postId, nickname(actorId), blog.getName(), post.getTitle()));
+        });
+    }
+
+    private void toPostOwner(Long postId, Long actorId, String type, Long skipId) {
         Post post = postRepository.findById(postId).orElse(null);
         if (post == null) {
             return;
         }
         Blog blog = blogAccess.find(post.getBlogId());
         Long owner = blog.getOwnerId();
-        if (owner.equals(actorId)) {
-            return; // 내 행동은 나에게 알리지 않는다
+        if (owner.equals(actorId) || owner.equals(skipId)) {
+            return; // 내 행동은 나에게 알리지 않는다, 답글 알림을 이미 받았다
         }
         if (Notification.LIKE.equals(type) && notificationRepository
                 .existsByRecipientIdAndActorIdAndPostIdAndTypeAndCreatedAtAfter(owner, actorId, postId, type,
@@ -257,6 +271,7 @@ public class NotificationService {
             case Notification.LIKE -> n.getActorName() + "님이 “" + n.getPostTitle() + "”에 공감했어요";
             case Notification.SUBSCRIBE -> n.getActorName() + "님이 내 블로그를 구독했어요";
             case Notification.MUTUAL -> n.getActorName() + "님이 블로그를 만들어서 맞구독이 됐어요";
+            case Notification.REPLY -> n.getActorName() + "님이 “" + n.getPostTitle() + "”의 내 댓글에 답글을 남겼어요";
             default -> n.getBlogName() + "에 새 글 “" + n.getPostTitle() + "”이 올라왔어요";
         };
     }

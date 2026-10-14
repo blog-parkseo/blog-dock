@@ -174,7 +174,7 @@ function ShareButton({ url }) {
   return <button className="pill" onClick={copy}>{done ? '✓ 주소를 복사했어요' : '🔗 공유 (주소 복사)'}</button>
 }
 
-// CMT-01~03 댓글 + 비밀 댓글 (글 주인과 쓴 사람만 봄)
+// CMT-01~03 댓글 + 비밀 댓글 (글 주인과 쓴 사람만 봄) + 답글 (한 단계, 원래 댓글 밑에 들여쓰기)
 function Comments({ postId, count, onCount }) {
   const { me } = useAuth()
   const loginHref = useLoginHref()
@@ -219,7 +219,9 @@ function Comments({ postId, count, onCount }) {
     <section className="comments">
       <h3>댓글 {count}</h3>
       <ul className="comment-list">
-        {items.map((c) => <CommentItem key={c.id} comment={c} onChanged={load} />)}
+        {items.filter((c) => !c.parentId).map((c) => (
+          <CommentItem key={c.id} comment={c} replies={items.filter((r) => r.parentId === c.id)} onChanged={load} />
+        ))}
       </ul>
       {me ? (
         <form onSubmit={submit}>
@@ -241,11 +243,17 @@ function Comments({ postId, count, onCount }) {
   )
 }
 
-function CommentItem({ comment, onChanged }) {
+function CommentItem({ comment, replies = [], onChanged, onReply }) {
+  const { me } = useAuth()
   const [editing, setEditing] = useState(false)
+  const [replying, setReplying] = useState(false)
   const [text, setText] = useState(comment.content)
   const [secret, setSecret] = useState(comment.secret)
   const [error, setError] = useState('')
+  const isReply = !!comment.parentId
+  const hidden = comment.secret && comment.content == null
+  // 답글의 답글 버튼은 원래 댓글의 답글 칸을 연다 (답글은 한 단계만)
+  const openReply = isReply ? onReply : () => setReplying(true)
 
   const save = async () => {
     try {
@@ -257,7 +265,8 @@ function CommentItem({ comment, onChanged }) {
     }
   }
   const remove = async () => {
-    if (!window.confirm('댓글을 지울까요?')) return
+    const ask = !isReply && replies.length ? '댓글을 지우면 달린 답글도 같이 지워져요. 지울까요?' : '댓글을 지울까요?'
+    if (!window.confirm(ask)) return
     try {
       await api('DELETE', `/api/comments/${comment.id}`)
       onChanged()
@@ -266,30 +275,45 @@ function CommentItem({ comment, onChanged }) {
     }
   }
 
+  const replyList = !isReply && (replies.length > 0 || replying) && (
+    <ul className="reply-list">
+      {replies.map((r) => <CommentItem key={r.id} comment={r} onChanged={onChanged} onReply={() => setReplying(true)} />)}
+      {replying && (
+        <ReplyForm parent={comment} onDone={() => { setReplying(false); onChanged() }} onCancel={() => setReplying(false)} />
+      )}
+    </ul>
+  )
+
   // 비밀 댓글인데 내용을 못 받으면 글 주인·쓴 사람이 아니라서 가려진 것
-  if (comment.secret && comment.content == null) {
+  if (hidden) {
     return (
-      <li className="comment secret-hidden">
-        <Avatar name="🔒" size={36} />
+      <li className={`comment secret-hidden${isReply ? ' reply' : ''}`}>
+        <Avatar name="🔒" size={isReply ? 30 : 36} />
         <div className="comment-main">
-          <p className="comment-head"><strong>비밀 댓글</strong> <time>{formatDateTime(comment.createdAt)}</time></p>
-          <p className="comment-body">글쓴이만 볼 수 있는 댓글이에요.</p>
+          <p className="comment-head"><strong>{isReply ? '비밀 답글' : '비밀 댓글'}</strong> <time>{formatDateTime(comment.createdAt)}</time></p>
+          <p className="comment-body">글쓴이만 볼 수 있는 {isReply ? '답글' : '댓글'}이에요.</p>
+          {replyList}
         </div>
       </li>
     )
   }
 
   return (
-    <li className="comment">
-      <Avatar name={comment.nickname} src={comment.profileImageUrl} size={36} />
+    <li className={`comment${isReply ? ' reply' : ''}`}>
+      <Avatar name={comment.nickname} src={comment.profileImageUrl} size={isReply ? 30 : 36} />
       <div className="comment-main">
-      <p className="comment-head"><strong>{comment.nickname}</strong>{comment.secret && <span className="secret-badge">🔒 비밀</span>} <time>{formatDateTime(comment.createdAt)}</time></p>
+      <p className="comment-head">
+        <strong>{comment.nickname}</strong>
+        {comment.byPostOwner && <span className="writer-badge">작성자</span>}
+        {comment.secret && <span className="secret-badge">🔒 비밀</span>}
+        <time>{formatDateTime(comment.createdAt)}</time>
+      </p>
       {editing ? (
         <>
           <textarea rows={3} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} aria-label="댓글 수정" />
           {error && <div className="error">{error}</div>}
           <p className="actions">
-            <label className="secret-check"><input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} /> 🔒 비밀 댓글</label>
+            {!isReply && <label className="secret-check"><input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} /> 🔒 비밀 댓글</label>}
             <button onClick={save}>저장</button> <button className="link" onClick={() => { setEditing(false); setText(comment.content); setSecret(comment.secret) }}>취소</button>
           </p>
         </>
@@ -298,11 +322,59 @@ function CommentItem({ comment, onChanged }) {
       )}
       {!editing && (
         <p className="actions">
+          {me && <button className="link" onClick={openReply}>답글</button>}
           {comment.canEdit && <button className="link" onClick={() => setEditing(true)}>수정</button>}
           {comment.canDelete && <button className="link danger" onClick={remove}>삭제</button>}
         </p>
       )}
+      {replyList}
       </div>
+    </li>
+  )
+}
+
+// 답글 쓰는 칸. 비밀 댓글에 다는 답글은 서버가 늘 비밀로 저장한다
+function ReplyForm({ parent, onDone, onCancel }) {
+  const [text, setText] = useState('')
+  const [secret, setSecret] = useState(false)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const keyRef = useRef(newRequestKey())
+  const sending = useRef(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (sending.current) return
+    sending.current = true
+    setBusy(true)
+    setError('')
+    try {
+      await api('POST', `/api/comments/${parent.id}/replies`, { content: text, secret },
+        { headers: { 'Idempotency-Key': keyRef.current } })
+      onDone()
+    } catch (err) {
+      setError(fieldErrors(err).content ?? err.message)
+    } finally {
+      sending.current = false
+      setBusy(false)
+    }
+  }
+
+  return (
+    <li className="reply-form">
+      <form onSubmit={submit}>
+        <label htmlFor={`reply-${parent.id}`} className="sr-only">답글</label>
+        <textarea id={`reply-${parent.id}`} rows={2} maxLength={1000} value={text} autoFocus
+          onChange={(e) => setText(e.target.value)} placeholder={parent.nickname ? `${parent.nickname}님에게 답글 남기기` : '답글 남기기'} />
+        {error && <div className="error">{error}</div>}
+        <p>
+          {parent.secret
+            ? <span className="secret-check">🔒 비밀 댓글의 답글이라 비밀로 남아요</span>
+            : <label className="secret-check"><input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} /> 🔒 비밀 답글</label>}
+          <button type="button" className="link" onClick={onCancel}>취소</button>
+          <button type="submit" className="primary" disabled={busy}>{busy ? '등록 중…' : '답글 등록'}</button>
+        </p>
+      </form>
     </li>
   )
 }

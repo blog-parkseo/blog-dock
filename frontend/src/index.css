@@ -277,6 +277,13 @@ button.liked { background: var(--accent-soft); border-color: color-mix(in srgb, 
 .secret-check input { width: auto; margin: 0; }
 .secret-badge { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--surface-soft); color: var(--muted); font-size: 12px; font-weight: 500; }
 .secret-hidden .comment-body { color: var(--muted); font-style: italic; }
+.reply-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.comment.reply { padding: 12px 0 4px; border-bottom: 0; border-top: 1px dashed var(--line); }
+.comment.reply .comment-body { font-size: 15px; }
+.reply-form { padding: 12px 0 4px; border-top: 1px dashed var(--line); }
+.reply-form textarea { border-radius: 12px; }
+.writer-badge { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 12px; font-weight: 600; }
+.comment-head time { white-space: nowrap; }
 .comment-login { padding: 18px; text-align: center; background: var(--surface-soft); border-radius: 12px; color: var(--muted); }
 .comment-login a { color: var(--accent-strong); font-weight: 600; text-decoration: underline; }
 

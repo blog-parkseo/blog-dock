@@ -48,6 +48,15 @@ public class CommentController {
                 HttpStatus.CREATED, () -> commentService.write(postId, memberId, req.content(), req.isSecret()));
     }
 
+    @PostMapping("/api/comments/{id}/replies")
+    public ResponseEntity<?> reply(@PathVariable Long id, @AuthenticationPrincipal LoginMember login,
+                                   @RequestHeader(value = Idempotency.HEADER, required = false) String key,
+                                   @Valid @RequestBody ContentRequest req) {
+        Long memberId = LoginMember.require(login);
+        return idempotency.run(memberId, key, java.util.Map.of("parentId", id, "content", req.content(), "secret", req.isSecret()),
+                HttpStatus.CREATED, () -> commentService.reply(id, memberId, req.content(), req.isSecret()));
+    }
+
     @PatchMapping("/api/comments/{id}")
     public CommentResponse edit(@PathVariable Long id, @AuthenticationPrincipal LoginMember login,
                                 @Valid @RequestBody ContentRequest req) {

@@ -5,7 +5,7 @@ import { blogLink } from '../blogUrl'
 import { formatDateTime } from '../format'
 import { NOTIFICATIONS_CHANGED } from '../components/NotificationBell'
 
-const ICON = { COMMENT: '💬', LIKE: '♥', SUBSCRIBE: '➕', NEW_POST: '📝', MUTUAL: '🤝' }
+const ICON = { COMMENT: '💬', LIKE: '♥', SUBSCRIBE: '➕', NEW_POST: '📝', MUTUAL: '🤝', REPLY: '↩️' }
 const changed = () => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED))
 
 // SUB-05 구독 알림 옆 맞구독 버튼. 상대 블로그가 아직 없으면 예약 맞구독(SUB-07)

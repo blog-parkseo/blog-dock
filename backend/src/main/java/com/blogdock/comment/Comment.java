@@ -23,6 +23,10 @@ public class Comment {
     @Column(name = "author_id", nullable = false, updatable = false)
     private Long authorId;
 
+    /** 답글이면 원래 댓글 id. 답글에는 다시 답글을 달지 않는다 (한 단계만). */
+    @Column(name = "parent_id", updatable = false)
+    private Long parentId;
+
     @Column(nullable = false)
     private String content;
 
@@ -50,6 +54,12 @@ public class Comment {
         return c;
     }
 
+    public static Comment reply(Comment parent, Long authorId, String content, boolean secret) {
+        Comment c = write(parent.postId, authorId, content, secret);
+        c.parentId = parent.id;
+        return c;
+    }
+
     public void edit(String content, boolean secret) {
         this.content = content;
         this.secret = secret;
@@ -66,6 +76,14 @@ public class Comment {
 
     public Long getPostId() {
         return postId;
+    }
+
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public boolean isReply() {
+        return parentId != null;
     }
 
     public Long getAuthorId() {

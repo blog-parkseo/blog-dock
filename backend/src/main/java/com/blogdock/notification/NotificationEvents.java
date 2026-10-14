@@ -9,7 +9,12 @@ public final class NotificationEvents {
     private NotificationEvents() {
     }
 
-    public record CommentWritten(Long postId, Long actorId) {
+    /** 답글이면 parentAuthorId에 원래 댓글 쓴 사람이 들어간다 (아니면 null). */
+    public record CommentWritten(Long postId, Long actorId, Long parentAuthorId) {
+
+        public CommentWritten(Long postId, Long actorId) {
+            this(postId, actorId, null);
+        }
     }
 
     public record PostLiked(Long postId, Long actorId) {
