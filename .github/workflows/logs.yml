@@ -17,7 +17,7 @@ jobs:
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
-            for c in seohyun-blog-1 seohyun-blog-2; do
+            for c in seohyun-blog seohyun-blog-2; do
               echo "===== $c"
               docker logs --since 3h "$c" 2>&1 | grep -E "로그인 실패|WARN|ERROR|Exception|Caused by" | tail -40 || true
             done
