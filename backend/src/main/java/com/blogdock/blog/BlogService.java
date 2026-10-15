@@ -67,6 +67,9 @@ public class BlogService {
             throw ApiException.forbidden("내 블로그만 고칠 수 있어요");
         }
         blog.update(req.name().trim(), blankToNull(req.description()), blankToNull(req.profileImageUrl()));
+        if (req.cover() != null) {
+            blog.changeCover("AUTO".equals(req.cover()) ? null : req.cover());
+        }
         return BlogResponse.of(blog, memberId, subscriptionService.status(blog, memberId));
     }
 

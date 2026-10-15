@@ -5,7 +5,8 @@ import { useAuth } from '../../AuthContext'
 import { blogLink } from '../../blogUrl'
 import SmartLink from '../../components/SmartLink'
 import ErrorView from '../../components/ErrorView'
-import Avatar, { colorOf } from '../../components/Avatar'
+import Avatar from '../../components/Avatar'
+import CoverArt, { coverColor, isScene } from '../../components/CoverArt'
 import SubscribeButton from '../../components/SubscribeButton'
 
 const BlogContext = createContext(null)
@@ -36,7 +37,9 @@ export default function BlogLayout({ address: hostAddress }) {
     setSidebar((s) => ({ ...s, blog: { ...s.blog, subscribed: r.subscribed, subscribesMe: r.subscribesMe, subscriberCount: r.subscriberCount } }))
   return (
     <BlogContext.Provider value={{ address, blog, sidebar, reload, link, setSubscription }}>
-      <section className="blog-cover" style={{ '--cover': colorOf(address) }}>
+      <section className={`blog-cover${isScene(blog.cover) ? ` scene scene-${blog.cover.toLowerCase()}` : ''}`}
+        style={{ '--cover': coverColor(blog.cover, address) }}>
+        <CoverArt code={blog.cover} />
         <SmartLink to={link('')} className="blog-cover-inner">
           <Avatar name={blog.name} src={blog.profileImageUrl} size={84} className="blog-avatar" />
           <div>

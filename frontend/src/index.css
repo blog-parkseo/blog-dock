@@ -157,6 +157,30 @@ legend { font-weight: 600; font-size: 14px; padding: 0 4px; color: var(--ink); }
 .blog-title { font-family: var(--serif); font-size: 2rem; margin: 0; }
 .blog-desc { margin: 6px 0 0; color: #5a544d; }
 .blog-subscribe { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; padding: 0 36px 26px; margin-top: -12px; }
+/* 그림 배경: 그림을 깔고, 글씨 쪽(왼쪽)만 살짝 밝게(밤빛은 어둡게) 덮어 글씨가 잘 읽히게 */
+.blog-cover.scene { background: #fff; }
+.cover-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.blog-cover.scene::after { inset: 0; right: 0; top: 0; width: auto; height: auto; border-radius: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .72) 0%, rgba(255, 255, 255, .45) 45%, rgba(255, 255, 255, 0) 75%); }
+.blog-cover.scene-sunset::after { background: linear-gradient(90deg, rgba(255, 244, 232, .6) 0%, rgba(255, 244, 232, .3) 45%, rgba(255, 244, 232, 0) 70%); }
+.blog-cover.scene-night::after { background: linear-gradient(90deg, rgba(10, 12, 34, .45) 0%, rgba(10, 12, 34, .15) 50%, rgba(10, 12, 34, 0) 75%); }
+.blog-cover.scene-night .blog-title, .blog-cover.scene-night .blog-desc, .blog-cover.scene-night .subscriber-count { color: #f4f1ff; text-shadow: 0 1px 6px rgba(0, 0, 0, .35); }
+.blog-cover.scene .blog-desc, .blog-cover.scene .subscriber-count { color: #3f3a35; }
+.blog-cover.scene-night .blog-desc, .blog-cover.scene-night .subscriber-count { color: #e3def5; }
+.blog-cover.scene .blog-cover-inner, .blog-cover.scene .blog-subscribe { z-index: 2; }
+
+/* 블로그 정보 수정 > 위쪽 배경 고르기 */
+.cover-picker { border: 0; padding: 0; margin: 18px 0 4px; }
+.cover-picker legend { font-weight: 600; font-size: 14px; margin-bottom: 4px; padding: 0; }
+.cover-picker .hint { margin: 10px 0 6px; font-size: 13px; }
+.cover-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.cover-option { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px; background: transparent; border: 2px solid transparent; border-radius: 14px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.cover-option:hover { background: var(--surface-soft); }
+.cover-option.selected { border-color: var(--accent); color: var(--text, inherit); font-weight: 600; }
+.cover-swatch { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cover) 45%, #fff), color-mix(in srgb, var(--cover) 12%, #fff)); font-weight: 700; color: var(--cover); }
+.cover-swatch.scene { width: 132px; height: 56px; border-radius: 12px; overflow: hidden; position: relative; }
+.cover-swatch-art { position: absolute; inset: 0; width: 100%; height: 100%; }
 .popular-list { list-style: none; padding: 0; margin: 0 0 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; }
 .popular-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-height: 72px; }
 .popular-item:hover { border-color: color-mix(in srgb, var(--accent) 40%, #fff); }

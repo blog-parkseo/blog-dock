@@ -32,6 +32,9 @@ public class Blog {
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
+    /** 블로그 위쪽 배경 (V14 주석의 코드). null이면 자동 색. */
+    private String cover;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -52,6 +55,14 @@ public class Blog {
         this.name = name;
         this.description = description;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void changeCover(String cover) {
+        this.cover = cover;
+    }
+
+    public String getCover() {
+        return cover;
     }
 
     public boolean isOwnedBy(Long memberId) {
