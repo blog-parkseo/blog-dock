@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/blogdock;MODE=MySQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  servlet:
+    multipart:
+      # 이미지 한 장 10MB (공통 정책 5). 여유를 조금 둔다
+      max-file-size: 11MB
+      max-request-size: 11MB
+  jackson:
+    time-zone: UTC
+  # 로그인 세션을 DB(SPRING_SESSION 표, V10)에 저장한다. 블로그를 두 개 띄워도(롤링 배포) 로그인이 유지된다
+  session:
+    jdbc:
+      initialize-schema: never
+  lifecycle:
+    # 끌 때 처리 중이던 요청은 마저 끝내고 끈다 (최대 20초)
+    timeout-per-shutdown-phase: 20s
+
+server:
+  shutdown: graceful
+  servlet:
+    session:
+      timeout: 14d
+      cookie:
+        name: JSESSIONID
+        max-age: 14d
+        http-only: true
+        same-site: lax
+
+blogdock:
+  # 올린 이미지를 저장할 폴더
+  upload-dir: ./uploads
+  # 관리자(아이디 admin) 비밀번호. 내 맥에서 연습할 때만 쓰는 값이고, 운영은 ADMIN_PASSWORD로 따로 넣는다
+  admin-password: admin1234

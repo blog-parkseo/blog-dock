@@ -1,0 +1,26 @@
+# 손으로 실행: 서버의 블로그 두 개 기록에서 로그인 실패와 오류 줄만 읽어 온다 (아무것도 바꾸지 않음).
+# Actions > logs > Run workflow (main에 들어간 뒤). 그전에는 이 파일을 고쳐 올리면 돈다
+name: logs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/speckit-spec-ylybrs]
+    paths: [.github/workflows/logs.yml]
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 서버 기록 읽기
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_ADDRESS }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_ID }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            for c in seohyun-blog seohyun-blog-2; do
+              echo "===== $c"
+              docker logs --since 3h "$c" 2>&1 | grep -E "로그인 실패|WARN|ERROR|Exception|Caused by" | tail -40 || true
+            done
