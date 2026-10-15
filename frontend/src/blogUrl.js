@@ -17,7 +17,11 @@ export function hostBlogAddress() {
 const clean = (sub) => String(sub ?? '').replace(/^\/+/, '')
 
 // 블로그 안의 화면 주소. { href, external }: external이면 <a>, 아니면 <Link>로 연다
-export function blogLink(address, sub = '') {
+// 블로그 주소 규칙(영문 소문자·숫자·하이픈 4~32자)에 맞을 때만 주소로 쓴다
+const ADDRESS = /^[a-z0-9-]{4,32}$/
+
+export function blogLink(rawAddress, sub = '') {
+  const address = ADDRESS.test(rawAddress) ? rawAddress : 'invalid'
   const path = clean(sub)
   if (!BLOG_DOMAIN) return { href: `/blog/${address}${path ? `/${path}` : ''}`, external: false }
   if (hostBlogAddress() === address) return { href: `/${path}`, external: false }

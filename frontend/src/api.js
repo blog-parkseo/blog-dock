@@ -56,4 +56,5 @@ export function fieldErrors(err) {
 
 // 연달아 눌러도 한 번만 처리되게 보내는 요청 키
 export const newRequestKey = () =>
-  crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`.slice(0, 36)
+  crypto.randomUUID?.() ??
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('')

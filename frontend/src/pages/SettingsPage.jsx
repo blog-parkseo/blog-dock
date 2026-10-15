@@ -72,7 +72,7 @@ function SocialLinks() {
   const load = () => api('GET', '/api/me/socials').then(setLinked).catch(() => setLinked([]))
   useEffect(() => {
     api('GET', '/api/auth/providers').then(setProviders).catch(() => setProviders({}))
-    load()
+    void load()
     if (params.has('linked') || params.has('linkError')) setParams({}, { replace: true })
   }, [])
 
@@ -81,7 +81,7 @@ function SocialLinks() {
     try {
       await api('DELETE', `/api/me/socials/${s.key}`)
       setMessage({ ok: true, text: `${s.name} 계정 연결을 해제했어요.` })
-      load()
+      void load()
     } catch (err) {
       setMessage({ ok: false, text: err.message })
     }

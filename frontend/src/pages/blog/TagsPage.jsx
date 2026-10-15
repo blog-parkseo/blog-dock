@@ -7,7 +7,7 @@ import { useBlog } from './BlogLayout'
 export default function TagsPage() {
   const { address, link } = useBlog()
   const [tags, setTags] = useState(null)
-  useEffect(() => { api('GET', `/api/blogs/${address}/tags`).then(setTags) }, [address])
+  useEffect(() => { api('GET', `/api/blogs/${address}/tags`).then(setTags).catch(() => setTags([])) }, [address])
   if (!tags) return null
   return (
     <div>

@@ -29,7 +29,7 @@ export default function HomePage() {
     }
   }
 
-  useEffect(() => { load(null) }, [])
+  useEffect(() => { void load(null) }, [])
 
   // HOME-02 인기 글 (서버가 10분마다 새로 계산한다)
   const [popular, setPopular] = useState(null)

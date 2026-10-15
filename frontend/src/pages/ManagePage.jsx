@@ -56,7 +56,7 @@ function MyPosts({ status, onChange }) {
   const [data, setData] = useState(null)
 
   const load = useCallback(() => {
-    api('GET', `/api/me/posts?status=${status}&page=${page}`).then(setData)
+    api('GET', `/api/me/posts?status=${status}&page=${page}`).then(setData).catch(() => {})
   }, [status, page])
   useEffect(() => { load() }, [load])
 
@@ -108,7 +108,7 @@ function CategoryManager({ address }) {
   const [error, setError] = useState('')
 
   const [themes, setThemes] = useState([])
-  const load = useCallback(() => { api('GET', `/api/blogs/${address}/categories`).then(setItems) }, [address])
+  const load = useCallback(() => { api('GET', `/api/blogs/${address}/categories`).then(setItems).catch(() => {}) }, [address])
   useEffect(() => { load() }, [load])
   useEffect(() => { api('GET', '/api/home/themes').then(setThemes).catch(() => {}) }, [])
   if (!items) return null
@@ -119,22 +119,22 @@ function CategoryManager({ address }) {
   }
   const add = (e) => {
     e.preventDefault()
-    run(async () => { await api('POST', `/api/blogs/${address}/categories`, { name }); setName('') })
+    void run(async () => { await api('POST', `/api/blogs/${address}/categories`, { name }); setName('') })
   }
   const rename = (c) => {
     const next = window.prompt('새 이름 (20자 이하)', c.name)
-    if (next && next !== c.name) run(() => api('PATCH', `/api/categories/${c.id}`, { name: next }))
+    if (next && next !== c.name) void run(() => api('PATCH', `/api/categories/${c.id}`, { name: next }))
   }
   const remove = (c) => {
     if (window.confirm(`'${c.name}' 카테고리를 지울까요? 이 카테고리의 글은 미분류로 옮겨져요.`)) {
-      run(() => api('DELETE', `/api/categories/${c.id}`))
+      void run(() => api('DELETE', `/api/categories/${c.id}`))
     }
   }
   const move = (index, dir) => {
     const ids = items.map((c) => c.id)
     const j = index + dir
     ;[ids[index], ids[j]] = [ids[j], ids[index]]
-    run(() => api('PUT', `/api/blogs/${address}/categories/order`, { ids }))
+    void run(() => api('PUT', `/api/blogs/${address}/categories/order`, { ids }))
   }
 
   return (

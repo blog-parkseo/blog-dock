@@ -30,8 +30,8 @@ export default function FeedPage() {
 
   const loadBlogs = () => api('GET', '/api/me/subscriptions').then(setBlogs).catch((err) => setError(err.message))
   useEffect(() => {
-    loadBlogs()
-    load(null)
+    void loadBlogs()
+    void load(null)
     api('GET', '/api/me/recommended-blogs').then(setRecommended).catch(() => setRecommended([]))
   }, [])
 
@@ -39,8 +39,8 @@ export default function FeedPage() {
   const [recommended, setRecommended] = useState([])
   const onSubscribe = (address, r) => {
     setRecommended((list) => list.map((b) => (b.address === address ? { ...b, ...r } : b)))
-    loadBlogs()
-    load(null)
+    void loadBlogs()
+    void load(null)
   }
 
   return (

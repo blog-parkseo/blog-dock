@@ -2,6 +2,7 @@ package com.blogdock.auth;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,8 +15,8 @@ import com.blogdock.common.ApiException;
 @Service
 public class AuthService {
 
-    /** 없는 아이디일 때도 비교하는 시간을 똑같이 맞추려고 쓰는 가짜 암호문. */
-    private static final String DUMMY_HASH = "$2a$10$dBhEIZUlN4/IylDsLbuwa.EmPCAlfRzuEQ4nifI5RhdslER3EcJMK";
+    /** 없는 아이디일 때도 비교하는 시간을 똑같이 맞추려고 쓰는 가짜 암호문 (켤 때마다 새로 만든다). */
+    private final String dummyHash;
 
     private final MemberRepository memberRepository;
     private final MemberSocialRepository socialRepository;
@@ -30,6 +31,7 @@ public class AuthService {
         this.blogRepository = blogRepository;
         this.passwordEncoder = passwordEncoder;
         this.loginAttempts = loginAttempts;
+        this.dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
     /** AUTH-01 회원가입: 아이디가 겹치면 안 되고, 비밀번호는 BCrypt로 바꿔 저장한다. */
@@ -51,7 +53,7 @@ public class AuthService {
                     "비밀번호를 여러 번 틀려서 잠시 막았어요. 5분 뒤에 다시 시도해 주세요", null);
         }
         Member member = memberRepository.findByLoginId(loginId).orElse(null);
-        String hash = member == null || member.getPasswordHash() == null ? DUMMY_HASH : member.getPasswordHash();
+        String hash = member == null || member.getPasswordHash() == null ? dummyHash : member.getPasswordHash();
         boolean matches = passwordEncoder.matches(req.password(), hash);
         if (member == null || member.getPasswordHash() == null || !matches) {
             loginAttempts.fail(loginId);

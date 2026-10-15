@@ -34,7 +34,7 @@ export default function WritePage() {
 
   useEffect(() => {
     if (!me?.blogAddress) return
-    api('GET', `/api/blogs/${me.blogAddress}/categories`).then(setCategories)
+    api('GET', `/api/blogs/${me.blogAddress}/categories`).then(setCategories).catch(() => {})
     api('GET', '/api/home/themes').then(setThemes).catch(() => {})
     if (postId) {
       api('GET', `/api/posts/${postId}/edit`).then(setLoaded).catch(setLoadError)
