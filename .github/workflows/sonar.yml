@@ -35,6 +35,26 @@ jobs:
         if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v5
 
+      - name: 버그·보안 문제 목록 출력
+        if: env.SONAR_TOKEN != ''
+        continue-on-error: true # 목록을 못 받아도 검사 결과는 그대로
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          api() { curl -sf -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/$1"; }
+          task=$(grep ceTaskId .scannerwork/report-task.txt | cut -d= -f2)
+          for i in $(seq 1 30); do
+            st=$(api "ce/task?id=$task" | jq -r .task.status)
+            [ "$st" = SUCCESS ] || [ "$st" = FAILED ] && break
+            sleep 5
+          done
+          where="branch=$GITHUB_REF_NAME"; [ -n "$PR" ] && where="pullRequest=$PR"
+          q="componentKeys=blog-parkseo_blog-dock&$where&issueStatuses=OPEN,CONFIRMED&ps=100"
+          for t in BUG VULNERABILITY; do
+            echo "== $t =="
+            api "issues/search?$q&types=$t" | jq -r '.issues[] | "\(.severity)\t\(.component | sub(".*:";""))#L\(.line // 0)\t\(.rule)\t\(.message)"'
+          done
+
       - name: 토큰이 없어서 건너뜀
         if: env.SONAR_TOKEN == ''
         run: echo "SONAR_TOKEN Secret이 없어서 검사를 건너뛰었어요."
